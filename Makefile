@@ -25,7 +25,7 @@ default: makedir all
 # non-phony targets
 $(TARGET): $(OBJ)
 	$(CXX) $(OBJ) $(CXXFLAGS) -o $(TARGET)
-	@echo "make: *** [cub3D] Success"
+	@echo "make: *** [" $(TARGET) "] Success"
 
 $(OBJ_PATH)/%.o: $(SRC_PATH)/%.cpp
 	$(CXX) $(CXXFLAGS) -I$(INC_PATH) -c $< -o $@
@@ -41,17 +41,13 @@ all: $(TARGET)
 .PHONY: clean
 clean:
 	@rm -f $(CLEAN_LIST)
-	@echo "make: *** [cub3D] Cleaned" $(CLEAN_LIST)
+	@echo "make: *** [" $(TARGET) "] Cleaned" $(CLEAN_LIST)
 	@rm -rf $(OBJ_PATH)
-	@make clean -C $(LFT_PATH)/
 
 .PHONY: fclean
-fclean:
-	@rm -f $(DISTCLEAN_LIST)
-	@echo "make: *** [cub3D] Cleaned" $(CLEAN_LIST)
-	@rm -rf $(OBJ_PATH)
-	@make fclean -C $(LFT_PATH)/
-	@rm -f $(LFT_PATH)/$(LFT)
+fclean: clean
+	@rm -f $(TARGET)
+
 
 .PHONY: re
 re: fclean makedir all
