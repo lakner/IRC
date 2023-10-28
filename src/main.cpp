@@ -12,17 +12,28 @@ int	output_err(std::string errormessage)
 
 int main(int argc, char** argv)
 {
-	std::cout << "Hello world" << std::endl;
 	if (argc != 3)
 		return output_err("Wrong number of arguments.");
 	try
 	{
-		unsigned int port = std::stoi(argv[1]);
-		Server ircserver = Server(port, argv[2]);
-		ircserver.start();
+		//unsigned int port = std::stoi(argv[1]);
+		Server ircserver = Server(argv[1], argv[2]);
+		if (ircserver.prepare() == -1)
+		{
+			throw std::runtime_error("Error preparing the socket");
+		}
+		else
+		{
+			std::cout << "Prepared successfully." << std::endl;
+		}
+		ircserver.run();
+
+
+		//ircserver.start();
 	}
 	catch(std::exception e)
 	{
 		output_err(e.what());
+		exit(1);
 	}
 }

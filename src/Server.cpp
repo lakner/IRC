@@ -1,57 +1,235 @@
 #include "Server.hpp"
 
-Server::Server() : _port(6667), _password("password")
+Server::Server() : _port("6667"), _password("password")
 {
-
 }
 
 Server::~Server()
 {
-
 }
 
-Server::Server(unsigned int port, std::string password)
+Server::Server(char* port, char* password) : _port(port), _password(password)
 {
-	this->_port = port;
-	this->_password = password;
 }
 
-int Server::start()
+// Server::Server(unsigned int port, std::string password)
+// {
+// 	this->_port = port;
+// 	this->_password = password;
+// }
+
+// we don't need the stuff below at all, this is for clients.
+// int Server::prepare()
+// {
+// 	struct addrinfo hints;
+	
+// 	std::memset(&hints, 0, sizeof(hints));
+// 	hints.ai_family = AF_INET;		// IPV4 only
+// 	hints.ai_socktype = SOCK_STREAM;
+// 	hints.ai_flags = AI_PASSIVE;
+// 	// ...getaddrinfo crap
+// }
+
+int Server::prepare()
 {
-	int bytes_read;
-	char buf[256];
+	struct addrinfo hints;
+	struct addrinfo *p;
+	int yes = 1;
 
-	this->_fd_socket = socket(AF_INET, SOCK_STREAM, 0);
-	if (_fd_socket < 0)
-		throw("Unable to create socket.");
-	std::memset(this->_server_addr.sin_zero, 
-				0, 
-				sizeof(this->_server_addr.sin_zero));
-	this->_server_addr.sin_family = AF_INET;
-	this->_server_addr.sin_addr.s_addr = INADDR_ANY;
-	this->_server_addr.sin_port = htons(this->_port);
-	if (bind(this->_fd_socket, 
-			(struct sockaddr *) &this->_server_addr, 
-			sizeof(this->_server_addr))
-		< 0)
-		throw("Error on bind().");
-	listen (this->_fd_socket, 16);
-	this->_clilen = sizeof(this->_client_addr);
-	this->_fd_new_socket = accept(_fd_socket, 
-								(struct sockaddr *) &_server_addr, 
-								&this->_clilen);
-	if (this->_fd_new_socket < 0)
-		throw("Error on accept().");
-	std::memset(buf, 0, 256);
-	// can set flags here instead of 0
-	bytes_read = recv(this->_fd_new_socket, buf, 255, 0);
-	if (bytes_read < 0)
-		throw("Error on read() from socket");
-	std::cout <<"Buffer contents: " << buf << std::endl;
-	// can set flags here instead of 0
-	write(this->_fd_new_socket, "Message received", 17);
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = AF_INET;
+	hints.ai_socktype = SOCK_STREAM;
+	hints.ai_flags = AI_PASSIVE;
 
-	close(this->_fd_socket);
-	close(this->_fd_new_socket);
-	return 0;
+	if ((getaddrinfo(NULL, this->_port, &hints, &this->_server_addrinfo)) != 0)
+	{
+		std::cerr << "Error getaddrinfo()" << std::endl;
+		exit(1);
+	}
+
+	// create listener socket
+	for(p = _server_addrinfo; p != NULL; p = p->ai_next) 
+	{
+		this->_server_sock_fd = socket(p->ai_family, p->ai_socktype, p->ai_protocol);
+			// 	this->_server_addr.sin_family = AF_INET;
+// 	this->_server_addr.sin_addr.s_addr = INADDR_ANY;
+// 	this->_server_addr.sin_port = htons(this->_port);
+		if (this->_server_sock_fd < 0)
+			continue;
+		setsockopt(this->_server_sock_fd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int));
+		
+		if (bind(this->_server_sock_fd, p->ai_addr, p->ai_addrlen)
+			< 0)
+		{
+			close(this->_server_sock_fd);
+			continue;
+		}
+		break;
+	}
+	freeaddrinfo(this->_server_addrinfo);
+	if (p == NULL)
+		return -1;
+
+	if (listen(this->_server_sock_fd, 10) == -1)
+		return -1;
+	return (this->_server_sock_fd);
 }
+
+int Server::run()
+{
+	int						newfd;
+	socklen_t				addrlen;
+	struct pollfd			pfd;
+	char					buf[256];
+
+	_pollfds.reserve(1000);	
+	std::memset(&pfd, 0, sizeof(pfd));
+	std::memset(&buf, 0, sizeof(buf));
+	pfd.fd = this->_server_sock_fd;
+	pfd.events = POLLIN;
+	_pollfds.push_back(pfd);
+
+	while (1)
+	{
+		// std::cout << "pollfds: " << _pollfds[0].fd << std::endl;
+		// std::cout << "_server_sock_fd: " << _server_sock_fd << std::endl;
+		// std::cout << "Size(_pollfds): " << _pollfds.size() << std::endl;
+		int poll_count = poll(&(_pollfds[0]), _pollfds.size(), -1);
+		if (poll_count == -1)
+		{
+			throw std::runtime_error("Polling error");
+		}
+		for(std::vector< pollfd >::iterator it = _pollfds.begin();
+			it != _pollfds.end(); it++)
+		{
+			// poll_count --;
+			// if (!poll_count)
+			// 	break;
+			// std::cout << "Iterating!" << std::endl;
+			// std::cout << "checkin revents" << std::endl;
+			// std::cout << "revents: " << (*it).revents << std::endl;
+			if ((*it).revents & POLLIN)
+			{
+				//std::cout << "RECEIVED POLLIN: " << std::endl << "(*it).fd = " << (*it).fd << std::endl << "_server_sock_fd = " << _server_sock_fd << std::endl; 
+				if ((*it).fd == this->_server_sock_fd)
+				{
+				// 	// handle new connection
+					std::cout << "handle new connection" << std::endl;
+					addrlen = sizeof(pfd);
+					newfd = accept(this->_server_sock_fd,
+								(struct sockaddr*) &pfd,
+								&addrlen);
+					if (newfd == -1)
+					{
+						std::cout << "accept() failed, terminating" << std::endl;
+						throw "Error with accept().";
+					}
+					else
+					{
+						pfd.fd = newfd;
+						pfd.events = POLLIN;
+						pfd.revents = 0;
+						 _pollfds.push_back(pfd);
+						std::cout << "Server: new connecton snippet" << std::endl;
+					}
+				}
+				else
+				{
+					std::cout << "Receiving data from " << (*it).fd << std::endl;
+				// 	// we're not the listening fd -> existing client sending stuff
+				// 	// If not the listener, we're just a regular client
+					int nbytes = recv((*it).fd, buf, sizeof buf, 0);
+					if (nbytes <= 0) 
+					{
+				 		// Got error or connection closed by client
+						if (nbytes == 0) 
+						{
+						// Connection closed
+							std::cout << "pollserver: socket " << (*it).fd << " hung up." << std::endl;
+						}
+						else 
+						{
+							std::cout << "Error on receive" << std::endl;
+						}				
+						close((*it).fd); // Bye!
+						this->_pollfds.erase(it);
+					}	
+					else 
+					{
+						// We got some good data from a client				
+						// TODO: Do something with it here.
+						std::cout << "receiving..."<< std::endl;
+						std::cout << buf << std::endl;
+						for(std::vector< pollfd >::iterator it = _pollfds.begin();
+							it != _pollfds.end(); it++)
+						{
+							// don't send back to the server
+							if (this->_server_sock_fd == (*it).fd)
+								continue;
+							std::cout << "Sending... "<< nbytes << " in buf: " << buf << " to " << (*it).fd << std::endl;
+							if (send((*it).fd, buf, nbytes, 0) == -1) 
+							{
+								std::cout << "Error sending with send()." << std::endl;
+								throw "Error sending.";
+							}
+						}
+					}
+				} // END handle data from client
+			}
+		}
+	}
+}
+
+// int Server::start()
+// {
+// 	int bytes_read;
+// 	char buf[256];
+
+// 	// (usually:)
+// 	// SOCK_STREAM for TCP
+// 	// SOCK_DGRAM for UDP
+
+// 	// this socket waits for connections
+// 	this->_fd_socket = socket(AF_INET, SOCK_STREAM, 0);
+// 	if (this->_fd_socket < 0)
+// 		throw("Unable to create socket.");
+// 	//fcntl(this->_fd_socket, F_SETFL, O_NONBLOCK);
+// 	std::memset(this->_server_addr.sin_zero, 
+// 				0, 
+// 				sizeof(this->_server_addr.sin_zero));
+// 	this->_server_addr.sin_family = AF_INET;
+// 	this->_server_addr.sin_addr.s_addr = INADDR_ANY;
+// 	this->_server_addr.sin_port = htons(this->_port);
+// 	if (bind(this->_fd_socket, 
+// 			(struct sockaddr *) &this->_server_addr, 
+// 			sizeof(this->_server_addr))
+// 		< 0)
+// 		throw("Error on bind().");
+// 	listen (this->_fd_socket, 16);
+// 	this->_clilen = sizeof(this->_client_addr);
+
+// 	// this socket gets newly created when someone tries to connect
+// 	// and is used by that connection only.
+// 	this->_fd_new_socket = accept(_fd_socket, 
+// 								(struct sockaddr *) &_server_addr, 
+// 								&this->_clilen);
+// 	if (this->_fd_new_socket < 0)
+// 		throw("Error on accept().");
+// 	//fcntl(this->_fd_new_socket, F_SETFL, O_NONBLOCK);
+// 	std::memset(buf, 0, 256);
+// 	// can set flags here instead of 0
+
+// 	// RECV HERE
+// 	bytes_read = recv(this->_fd_new_socket, buf, 255, 0);
+// 	if (bytes_read < 0)
+// 		throw("Error on read() from socket");
+// 	std::cout <<"Buffer contents: " << buf << std::endl;
+// 	// can set flags here instead of 0
+
+// 	//SEND/WRITE HERE (what's the difference between those two? I have no idea)
+// 	write(this->_fd_new_socket, "Message received", 17);
+
+// 	close(this->_fd_socket);
+// 	close(this->_fd_new_socket);
+// 	return 0;
+// }
