@@ -100,7 +100,7 @@ int Server::run()
 			throw std::runtime_error("Polling error");
 		}
 		for(std::vector< pollfd >::iterator it = _pollfds.begin();
-			it != _pollfds.end(); it++)
+			it != _pollfds.end(); )
 		{
 			// poll_count --;
 			// if (!poll_count)
@@ -152,12 +152,14 @@ int Server::run()
 							std::cout << "Error on receive" << std::endl;
 						}				
 						close((*it).fd); // Bye!
-						this->_pollfds.erase(it);
+						(*it).revents = 0;
+						it = this->_pollfds.erase(it);
+						std::cout << "successfully erased pollfd" << std::endl;
+						continue;
 					}	
 					else 
 					{
 						// We got some good data from a client				
-						// TODO: Do something with it here.
 						std::cout << "receiving..."<< std::endl;
 						std::cout << buf << std::endl;
 						for(std::vector< pollfd >::iterator it = _pollfds.begin();
@@ -174,62 +176,9 @@ int Server::run()
 							}
 						}
 					}
-				} // END handle data from client
+				}
 			}
+			it++;
 		}
 	}
 }
-
-// int Server::start()
-// {
-// 	int bytes_read;
-// 	char buf[256];
-
-// 	// (usually:)
-// 	// SOCK_STREAM for TCP
-// 	// SOCK_DGRAM for UDP
-
-// 	// this socket waits for connections
-// 	this->_fd_socket = socket(AF_INET, SOCK_STREAM, 0);
-// 	if (this->_fd_socket < 0)
-// 		throw("Unable to create socket.");
-// 	//fcntl(this->_fd_socket, F_SETFL, O_NONBLOCK);
-// 	std::memset(this->_server_addr.sin_zero, 
-// 				0, 
-// 				sizeof(this->_server_addr.sin_zero));
-// 	this->_server_addr.sin_family = AF_INET;
-// 	this->_server_addr.sin_addr.s_addr = INADDR_ANY;
-// 	this->_server_addr.sin_port = htons(this->_port);
-// 	if (bind(this->_fd_socket, 
-// 			(struct sockaddr *) &this->_server_addr, 
-// 			sizeof(this->_server_addr))
-// 		< 0)
-// 		throw("Error on bind().");
-// 	listen (this->_fd_socket, 16);
-// 	this->_clilen = sizeof(this->_client_addr);
-
-// 	// this socket gets newly created when someone tries to connect
-// 	// and is used by that connection only.
-// 	this->_fd_new_socket = accept(_fd_socket, 
-// 								(struct sockaddr *) &_server_addr, 
-// 								&this->_clilen);
-// 	if (this->_fd_new_socket < 0)
-// 		throw("Error on accept().");
-// 	//fcntl(this->_fd_new_socket, F_SETFL, O_NONBLOCK);
-// 	std::memset(buf, 0, 256);
-// 	// can set flags here instead of 0
-
-// 	// RECV HERE
-// 	bytes_read = recv(this->_fd_new_socket, buf, 255, 0);
-// 	if (bytes_read < 0)
-// 		throw("Error on read() from socket");
-// 	std::cout <<"Buffer contents: " << buf << std::endl;
-// 	// can set flags here instead of 0
-
-// 	//SEND/WRITE HERE (what's the difference between those two? I have no idea)
-// 	write(this->_fd_new_socket, "Message received", 17);
-
-// 	close(this->_fd_socket);
-// 	close(this->_fd_new_socket);
-// 	return 0;
-// }

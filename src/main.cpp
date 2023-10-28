@@ -16,7 +16,6 @@ int main(int argc, char** argv)
 		return output_err("Wrong number of arguments.");
 	try
 	{
-		//unsigned int port = std::stoi(argv[1]);
 		Server ircserver = Server(argv[1], argv[2]);
 		if (ircserver.prepare() == -1)
 		{
@@ -27,9 +26,6 @@ int main(int argc, char** argv)
 			std::cout << "Prepared successfully." << std::endl;
 		}
 		ircserver.run();
-
-
-		//ircserver.start();
 	}
 	catch(std::exception e)
 	{
