@@ -51,11 +51,9 @@ int Server::prepare()
 	for(p = _server_addrinfo; p != NULL; p = p->ai_next) 
 	{
 		this->_server_sock_fd = socket(p->ai_family, p->ai_socktype, p->ai_protocol);
-			// 	this->_server_addr.sin_family = AF_INET;
-// 	this->_server_addr.sin_addr.s_addr = INADDR_ANY;
-// 	this->_server_addr.sin_port = htons(this->_port);
 		if (this->_server_sock_fd < 0)
 			continue;
+		fcntl(this->_server_sock_fd, F_SETFL, O_NONBLOCK);
 		setsockopt(this->_server_sock_fd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int));
 		
 		if (bind(this->_server_sock_fd, p->ai_addr, p->ai_addrlen)
