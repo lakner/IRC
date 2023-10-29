@@ -89,9 +89,6 @@ int Server::run()
 
 	while (1)
 	{
-		// std::cout << "pollfds: " << _pollfds[0].fd << std::endl;
-		// std::cout << "_server_sock_fd: " << _server_sock_fd << std::endl;
-		// std::cout << "Size(_pollfds): " << _pollfds.size() << std::endl;
 		int poll_count = poll(&(_pollfds[0]), _pollfds.size(), -1);
 		if (poll_count == -1)
 		{
@@ -100,16 +97,10 @@ int Server::run()
 		for(std::vector< pollfd >::iterator it = _pollfds.begin();
 			it != _pollfds.end(); )
 		{
-			// poll_count --;
-			// if (!poll_count)
-			// 	break;
-			// std::cout << "Iterating!" << std::endl;
-			// std::cout << "checkin revents" << std::endl;
-			// std::cout << "revents: " << (*it).revents << std::endl;
 			if ((*it).revents & POLLIN)
 			{
-				//std::cout << "RECEIVED POLLIN: " << std::endl << "(*it).fd = " << (*it).fd << std::endl << "_server_sock_fd = " << _server_sock_fd << std::endl; 
 				if ((*it).fd == this->_server_sock_fd)
+					newClientConnection();
 				{
 				// 	// handle new connection
 					std::cout << "handle new connection" << std::endl;
