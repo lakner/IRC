@@ -201,5 +201,4 @@ int	Server::readFromExistingClient(int client_fd)
 		// 	client.clear_write_buffer();
 		// }
 	}
-	return (nbytes);
 }
