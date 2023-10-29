@@ -12,43 +12,39 @@ Server::Server(char* port, char* password) : _port(port), _password(password)
 {
 }
 
-// Server::Server(unsigned int port, std::string password)
-// {
-// 	this->_port = port;
-// 	this->_password = password;
-// }
-
-// we don't need the stuff below at all, this is for clients.
-// int Server::prepare()
-// {
-// 	struct addrinfo hints;
-	
-// 	std::memset(&hints, 0, sizeof(hints));
-// 	hints.ai_family = AF_INET;		// IPV4 only
-// 	hints.ai_socktype = SOCK_STREAM;
-// 	hints.ai_flags = AI_PASSIVE;
-// 	// ...getaddrinfo crap
-// }
 
 int Server::prepare()
 {
-	struct addrinfo hints;
-	struct addrinfo *p;
-	int yes = 1;
+	struct addrinfo *addrinfo, hints;
 
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = AF_INET;
 	hints.ai_socktype = SOCK_STREAM;
 	hints.ai_flags = AI_PASSIVE;
 
-	if ((getaddrinfo(NULL, this->_port, &hints, &this->_server_addrinfo)) != 0)
+	if ((getaddrinfo(NULL, this->_port, &hints, &addrinfo)) != 0)
 	{
 		std::cerr << "Error getaddrinfo()" << std::endl;
 		exit(1);
 	}
 
-	// create listener socket
-	for(p = this->_server_addrinfo; p != NULL; p = p->ai_next)
+	if (createListenerSocket(addrinfo) == NULL)
+	{
+		freeaddrinfo(addrinfo);
+		return -1;
+	}
+	freeaddrinfo(addrinfo);
+
+	if (listen(this->_server_sock_fd, 10) == -1)
+		return -1;
+	return (this->_server_sock_fd);
+}
+
+struct addrinfo*	Server::createListenerSocket(struct addrinfo* addrinfo)
+{
+	struct addrinfo *p = NULL;
+	int yes = 1;
+	for(p = addrinfo; p != NULL; p = p->ai_next) 
 	{
 		this->_server_sock_fd = socket(p->ai_family, p->ai_socktype, p->ai_protocol);
 		if (this->_server_sock_fd < 0)
@@ -61,15 +57,9 @@ int Server::prepare()
 			close(this->_server_sock_fd);
 			continue;
 		}
-		break;
+		return p;
 	}
-	freeaddrinfo(this->_server_addrinfo);
-	if (p == NULL)
-		return -1;
-
-	if (listen(this->_server_sock_fd, 10) == -1)
-		return -1;
-	return (this->_server_sock_fd);
+	return p;
 }
 
 int Server::run()

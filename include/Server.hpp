@@ -29,9 +29,9 @@ class Server
 	private:
 		const char*				_port;
 		const std::string 		_password;
-		struct addrinfo 		*_server_addrinfo;
 		int						_server_sock_fd;
 		std::vector< pollfd >	_pollfds;
+		struct addrinfo*		createListenerSocket(struct addrinfo* addrinfo);
 		void					newClientConnection();
 		int						readFromExistingClient(int client_fd);
 		void					add_client(int client_fd);
