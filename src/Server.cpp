@@ -75,14 +75,10 @@ int Server::prepare()
 
 int Server::run()
 {
-	int						newfd;
-	socklen_t				addrlen;
 	struct pollfd			pfd;
-	char					buf[256];
 
 	_pollfds.reserve(1000);	
 	std::memset(&pfd, 0, sizeof(pfd));
-	std::memset(&buf, 0, sizeof(buf));
 	pfd.fd = this->_server_sock_fd;
 	pfd.events = POLLIN;
 	_pollfds.push_back(pfd);
@@ -101,73 +97,83 @@ int Server::run()
 			{
 				if ((*it).fd == this->_server_sock_fd)
 					newClientConnection();
-				{
-				// 	// handle new connection
-					std::cout << "handle new connection" << std::endl;
-					addrlen = sizeof(pfd);
-					newfd = accept(this->_server_sock_fd,
-								(struct sockaddr*) &pfd,
-								&addrlen);
-					if (newfd == -1)
-					{
-						std::cout << "accept() failed, terminating" << std::endl;
-						throw "Error with accept().";
-					}
-					else
-					{
-						pfd.fd = newfd;
-						pfd.events = POLLIN;
-						pfd.revents = 0;
-						 _pollfds.push_back(pfd);
-						std::cout << "Server: new connecton snippet" << std::endl;
-					}
-				}
 				else
 				{
-					std::cout << "Receiving data from " << (*it).fd << std::endl;
-				// 	// we're not the listening fd -> existing client sending stuff
-				// 	// If not the listener, we're just a regular client
-					int nbytes = recv((*it).fd, buf, sizeof buf, 0);
-					if (nbytes <= 0) 
+					if (readFromExistingClient((*it).fd) <= 0)
 					{
-				 		// Got error or connection closed by client
-						if (nbytes == 0) 
-						{
-						// Connection closed
-							std::cout << "pollserver: socket " << (*it).fd << " hung up." << std::endl;
-						}
-						else 
-						{
-							std::cout << "Error on receive" << std::endl;
-						}				
-						close((*it).fd); // Bye!
 						(*it).revents = 0;
 						it = this->_pollfds.erase(it);
-						std::cout << "successfully erased pollfd" << std::endl;
 						continue;
-					}	
-					else 
-					{
-						// We got some good data from a client				
-						std::cout << "receiving..."<< std::endl;
-						std::cout << buf << std::endl;
-						for(std::vector< pollfd >::iterator it = _pollfds.begin();
-							it != _pollfds.end(); it++)
-						{
-							// don't send back to the server
-							if (this->_server_sock_fd == (*it).fd)
-								continue;
-							std::cout << "Sending... "<< nbytes << " in buf: " << buf << " to " << (*it).fd << std::endl;
-							if (send((*it).fd, buf, nbytes, 0) == -1) 
-							{
-								std::cout << "Error sending with send()." << std::endl;
-								throw "Error sending.";
-							}
-						}
 					}
 				}
 			}
 			it++;
 		}
 	}
+}
+
+
+void	Server::newClientConnection()
+{
+	struct pollfd	pfd;
+	socklen_t		addrlen;
+	int				newfd;
+
+	std::cout << "Handling connection from a new client" << std::endl;
+	std::memset(&pfd, 0, sizeof(pfd));
+	addrlen = sizeof(pfd);
+	newfd = accept(this->_server_sock_fd,
+				(struct sockaddr*) &pfd,
+				&addrlen);
+	if (newfd == -1)
+	{
+		std::cout << "accept() failed, terminating" << std::endl;
+		throw "Error with accept().";
+	}
+	else
+	{
+		pfd.fd = newfd;
+		pfd.events = POLLIN;
+		pfd.revents = 0;
+		this->_pollfds.push_back(pfd);
+		std::cout << "Server: new connecton from client added" << std::endl;
+	}
+}
+
+int	Server::readFromExistingClient(int client_fd)
+{
+	char	buf[256];
+
+	memset(&buf, 0, sizeof(buf));
+	std::cout << "Receiving data from " << client_fd << std::endl;
+	int nbytes = recv(client_fd, buf, sizeof (buf), 0);
+	if (nbytes <= 0) 
+	{
+		// Got error or connection closed by client
+		if (nbytes == 0) // Connection closed
+			std::cout << "pollserver: socket " << client_fd << " hung up." << std::endl;
+		else // some other error
+			std::cout << "Error on receive" << std::endl;
+		close(client_fd); // Bye!
+	}	
+	else 
+	{
+		// We got some good data from a client
+		std::cout << "receiving..."<< std::endl;
+		std::cout << buf << std::endl;
+		for(std::vector< pollfd >::iterator it = _pollfds.begin();
+			it != _pollfds.end(); it++)
+		{
+			// don't send back to the server
+			if (this->_server_sock_fd == (*it).fd)
+				continue;
+			std::cout << "Sending... " << nbytes << " bytes in buf: " << buf << " to " << (*it).fd << std::endl;
+			if (send((*it).fd, buf, nbytes, 0) == -1) 
+			{
+				std::cout << "Error sending with send()." << std::endl;
+				throw "Error sending.";
+			}
+		}
+	}
+	return (nbytes);
 }

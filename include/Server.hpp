@@ -29,7 +29,7 @@ class Server
 		int						_server_sock_fd;
 		std::vector< pollfd >	_pollfds;
 		void					newClientConnection();
-		std::vector< pollfd> _pollfds;
+		int						readFromExistingClient(int client_fd);
 };
 
 #endif
