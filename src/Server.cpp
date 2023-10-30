@@ -147,27 +147,31 @@ void	Server::newClientConnection()
 int	Server::readFromExistingClient(int client_fd)
 {
 	char	buf[256];
+	int		nbytes = 0;
 
-	memset(&buf, 0, sizeof(buf));
 	std::cout << "Receiving data from " << client_fd << std::endl;
-	int nbytes = recv(client_fd, buf, sizeof (buf), 0);
+	Client &client = get_client(client_fd);
+	memset(&buf, 0, sizeof(buf));
+	nbytes = recv(client_fd, buf, sizeof (buf), 0);
+	client.set_read_buffer(buf);
+	std::cout << "read " << nbytes << " bytes in buf " << buf << std::endl;
+	std::cout << "get_read_buffer: " << client.get_read_buffer() << std::endl;
 	if (nbytes <= 0)
 	{
-		// Got error or connection closed by client
 		if (nbytes == 0) // Connection closed
 			std::cout << "pollserver: socket " << client_fd << " hung up." << std::endl;
 		else // some other error
 			std::cout << "Error on receive" << std::endl;
 		close(client_fd); // Bye!
 	}
-	else
+	else if (client.get_read_buffer().find("\r\n") != std::string::npos)
 	{
-		sendToAllClients(buf);
+		sendToAllClients();
 	}
 	return(nbytes);
 }
 
-void Server::sendToAllClients(char *buf)
+void Server::sendToAllClients()
 {
 	// We got some good data from a client
 	for(std::vector< pollfd >::iterator it = _pollfds.begin();
@@ -177,7 +181,7 @@ void Server::sendToAllClients(char *buf)
 		if (this->_server_sock_fd == (*it).fd)
 			continue;
 		Client&		client = get_client((*it).fd);
-		client.set_read_buffer(buf);
+		//client.set_read_buffer(buf);
 		// process_data() before copying to writebuffer
 		client.set_write_buffer(client.get_read_buffer());
 		client.clear_read_buffer();
