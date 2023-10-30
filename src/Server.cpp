@@ -62,7 +62,7 @@ struct addrinfo*	Server::createListenerSocket(struct addrinfo* addrinfo)
 	return p;
 }
 
-int Server::run()
+int	Server::run()
 {
 	struct pollfd			pfd;
 
@@ -195,19 +195,4 @@ void Server::sendToAllClients()
 		}
 		client.clear_write_buffer();
 	}
-
-	// std::cout << "Sending '" << buf <<"' to all clients "<< std::endl;
-	// for(std::vector< pollfd >::iterator it = _pollfds.begin();
-	// 	it != _pollfds.end(); it++)
-	// {
-	// 	// don't send back to the server
-	// 	if (this->_server_sock_fd == (*it).fd)
-	// 		continue;
-	// 	std::cout << "Sending... " << nbytes << " bytes in buf: " << buf << " to " << (*it).fd << std::endl;
-	// 	if (send((*it).fd, buf, nbytes, 0) == -1) 
-	// 	{
-	// 		std::cout << "Error sending with send()." << std::endl;
-	// 		throw "Error sending.";
-	// 	}
-	// }
 }
