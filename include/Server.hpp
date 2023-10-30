@@ -12,6 +12,9 @@
 #include <netdb.h>
 #include <netinet/in.h>
 #include <poll.h>
+#include <map>
+#include "Client.hpp"
+//#include "Channel.hpp"
 
 class Server
 {
@@ -21,6 +24,7 @@ class Server
 		~Server();
 		int			prepare();
 		int			run();
+		Client&		get_client(int	client_fd);
 	
 	private:
 		const char*				_port;
@@ -30,6 +34,10 @@ class Server
 		std::vector< pollfd >	_pollfds;
 		void					newClientConnection();
 		int						readFromExistingClient(int client_fd);
+		void					add_client(int client_fd);
+
+		std::map<const int, Client>		_clients;
+		//std::map<std::string, Channel>	_channels;
 };
 
 #endif

@@ -1,8 +1,8 @@
 #include "Server.hpp"
 
-Server::Server() : _port("6667"), _password("password")
-{
-}
+// Server::Server() : _port("6667"), _password("password")
+// {
+// }
 
 Server::~Server()
 {
@@ -48,7 +48,7 @@ int Server::prepare()
 	}
 
 	// create listener socket
-	for(p = _server_addrinfo; p != NULL; p = p->ai_next) 
+	for(p = this->_server_addrinfo; p != NULL; p = p->ai_next)
 	{
 		this->_server_sock_fd = socket(p->ai_family, p->ai_socktype, p->ai_protocol);
 		if (this->_server_sock_fd < 0)
@@ -56,8 +56,7 @@ int Server::prepare()
 		fcntl(this->_server_sock_fd, F_SETFL, O_NONBLOCK);
 		setsockopt(this->_server_sock_fd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int));
 		
-		if (bind(this->_server_sock_fd, p->ai_addr, p->ai_addrlen)
-			< 0)
+		if (bind(this->_server_sock_fd, p->ai_addr, p->ai_addrlen) < 0)
 		{
 			close(this->_server_sock_fd);
 			continue;
@@ -112,28 +111,43 @@ int Server::run()
 	}
 }
 
+void	Server::add_client(int client_fd)
+{
+	Client		new_client(client_fd);
+
+	_clients.insert(std::pair<int, Client>(client_fd, new_client));
+}
+
+Client&		Server::get_client(int client_fd)
+{
+	std::map<const int, Client>::iterator it = _clients.find(client_fd);
+    return (it->second);
+}
 
 void	Server::newClientConnection()
 {
 	struct pollfd	pfd;
-	socklen_t		addrlen;
-	int				newfd;
+	struct sockaddr client_addr;
+	socklen_t		client_addr_len;
+	int				new_client_socket;
 
 	std::cout << "Handling connection from a new client" << std::endl;
 	std::memset(&pfd, 0, sizeof(pfd));
-	addrlen = sizeof(pfd);
-	newfd = accept(this->_server_sock_fd,
-				(struct sockaddr*) &pfd,
-				&addrlen);
-	if (newfd == -1)
+	client_addr_len = sizeof(client_addr);
+	new_client_socket = accept(this->_server_sock_fd,
+				&client_addr,
+				&client_addr_len);
+	if (new_client_socket == -1)
 	{
 		std::cout << "accept() failed, terminating" << std::endl;
 		throw "Error with accept().";
 	}
 	else
 	{
-		pfd.fd = newfd;
-		pfd.events = POLLIN;
+		fcntl(new_client_socket, F_SETFL, O_NONBLOCK);
+		add_client(new_client_socket);
+		pfd.fd = new_client_socket;
+		pfd.events = POLLIN; // expand events later
 		pfd.revents = 0;
 		this->_pollfds.push_back(pfd);
 		std::cout << "Server: new connecton from client added" << std::endl;
@@ -147,7 +161,7 @@ int	Server::readFromExistingClient(int client_fd)
 	memset(&buf, 0, sizeof(buf));
 	std::cout << "Receiving data from " << client_fd << std::endl;
 	int nbytes = recv(client_fd, buf, sizeof (buf), 0);
-	if (nbytes <= 0) 
+	if (nbytes <= 0)
 	{
 		// Got error or connection closed by client
 		if (nbytes == 0) // Connection closed
@@ -155,25 +169,37 @@ int	Server::readFromExistingClient(int client_fd)
 		else // some other error
 			std::cout << "Error on receive" << std::endl;
 		close(client_fd); // Bye!
-	}	
-	else 
+	}
+	else
 	{
 		// We got some good data from a client
-		std::cout << "receiving..."<< std::endl;
-		std::cout << buf << std::endl;
-		for(std::vector< pollfd >::iterator it = _pollfds.begin();
-			it != _pollfds.end(); it++)
+		Client&		client = get_client(client_fd);
+		client.set_read_buffer(buf);
+		// process_data() before copying to writebuffer
+		client.set_write_buffer(client.get_read_buffer());
+		client.clear_read_buffer();
+		std::cout << "Received:  " << client.get_write_buffer() << std::endl;
+
+		if (send(client_fd, "Server recieved:   ", 19, 0) == -1 || send(client_fd, client.get_write_buffer().c_str(), client.get_write_buffer().size(), 0) == -1)
 		{
-			// don't send back to the server
-			if (this->_server_sock_fd == (*it).fd)
-				continue;
-			std::cout << "Sending... " << nbytes << " bytes in buf: " << buf << " to " << (*it).fd << std::endl;
-			if (send((*it).fd, buf, nbytes, 0) == -1) 
-			{
-				std::cout << "Error sending with send()." << std::endl;
-				throw "Error sending.";
-			}
+			std::cout << "Error sending with send()." << std::endl;
+			throw "Error sending.";
 		}
+		client.clear_write_buffer();
+		// for(std::vector< pollfd >::iterator it = _pollfds.begin();
+		// 	it != _pollfds.end(); it++)
+		// {
+		// 	// don't send back to the server
+		// 	if (this->_server_sock_fd == (*it).fd)
+		// 		continue;
+		// 	//std::cout << "Sending... " << get_write_buffer(void).size() << " bytes in buf: " << get_write_buffer(void) << " to " << (*it).fd << std::endl;
+		// 	if (send((*it).fd, buf, nbytes, 0) == -1)
+		// 	{
+		// 		std::cout << "Error sending with send()." << std::endl;
+		// 		throw "Error sending.";
+		// 	}
+		// 	client.clear_write_buffer();
+		// }
 	}
 	return (nbytes);
 }
