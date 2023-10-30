@@ -13,7 +13,12 @@ Server::Server(char* port, char* password) : _port(port), _password(password)
 }
 
 
-int Server::prepare()
+const std::string	Server::get_pass()
+{
+	return(_password);
+}
+
+int	Server::prepare()
 {
 	struct addrinfo *addrinfo, hints;
 
@@ -111,7 +116,7 @@ void	Server::add_client(int client_fd)
 Client&		Server::get_client(int client_fd)
 {
 	std::map<const int, Client>::iterator it = _clients.find(client_fd);
-    return (it->second);
+	return (it->second);
 }
 
 void	Server::newClientConnection()
@@ -166,12 +171,14 @@ int	Server::readFromExistingClient(int client_fd)
 	}
 	else if (client.get_read_buffer().find("\r\n") != std::string::npos)
 	{
+		Message msg(&client, client.get_read_buffer());
+		Commands::execute(this, &msg);
 		sendToAllClients();
 	}
 	return(nbytes);
 }
 
-void Server::sendToAllClients()
+int	Server::sendToAllClients()
 {
 	// We got some good data from a client
 	for(std::vector< pollfd >::iterator it = _pollfds.begin();
@@ -192,7 +199,9 @@ void Server::sendToAllClients()
 		{
 			std::cout << "Error sending with send()." << std::endl;
 			throw "Error sending.";
+			return(-1);
 		}
 		client.clear_write_buffer();
 	}
+	return(0);
 }

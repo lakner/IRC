@@ -1,7 +1,7 @@
 #include "Client.hpp"
 #include <iostream>
 
-Client::Client(int client_fd) : _client_fd(client_fd) { std::cout << _client_fd << std::endl;}
+Client::Client(int client_fd) : _client_fd(client_fd), _authenticated(false) { std::cout << _client_fd << std::endl;}
 
 Client::~Client()
 {
@@ -36,4 +36,14 @@ void	Client::clear_write_buffer(void)
 void	Client::clear_read_buffer(void)
 {
 	_read_buffer.clear();
+}
+
+bool	Client::is_authd()
+{
+	return _authenticated;
+}
+
+void	Client::authenticate(bool valid)
+{
+	_authenticated = valid;
 }

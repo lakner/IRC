@@ -14,7 +14,11 @@
 #include <poll.h>
 #include <map>
 #include "Client.hpp"
+#include "Message.hpp"
+#include "Commands.hpp"
 //#include "Channel.hpp"
+
+class Client;
 
 class Server
 {
@@ -22,9 +26,11 @@ class Server
 		Server();
 		Server(char* port, char* password);
 		~Server();
-		int			prepare();
-		int			run();
-		Client&		get_client(int	client_fd);
+		int					prepare();
+		int					run();
+		Client&				get_client(int	client_fd);
+		const std::string	get_pass();
+		int					sendToAllClients();
 	
 	private:
 		const char*				_port;
@@ -37,7 +43,6 @@ class Server
 		void					add_client(int client_fd);
 		std::map<const int, Client>		_clients;
 		//std::map<std::string, Channel>	_channels;
-		void					sendToAllClients();
 };
 
 #endif
