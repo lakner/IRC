@@ -18,8 +18,8 @@ int	Commands::execute(Server *server, Message *msg)
 		return(exec_cap());
 	else if (command == "PASS")
 		return(exec_pass(server, msg));
-	else
-		return(server->sendToAllClients());
+	else 
+		return(server->sendToAllClients(msg)); // maybe first send into the clients writebuffer
 }
 
 int	Commands::exec_cap()

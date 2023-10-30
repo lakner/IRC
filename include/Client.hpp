@@ -18,7 +18,8 @@ class	Client
 		void					clear_write_buffer(void);
 		bool					is_authd();
 		void					authenticate(bool valid);
-
+		int						get_client_fd();
+		std::string				get_nickname();
 	private:
 		int						_client_fd;
 		std::string				_nickname;

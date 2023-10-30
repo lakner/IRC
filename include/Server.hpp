@@ -30,7 +30,7 @@ class Server
 		int					run();
 		Client&				get_client(int	client_fd);
 		const std::string	get_pass();
-		int					sendToAllClients();
+		int					sendToAllClients(Message *msg);
 	
 	private:
 		const char*				_port;

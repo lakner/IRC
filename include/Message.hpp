@@ -19,6 +19,7 @@ class Message
 		std::string	get_command();
 		std::string	get_payload();
 		Client*		get_rcpnt();
+		// std::string	get_raw_content();
 
 	private:
 		Client		*_sender;

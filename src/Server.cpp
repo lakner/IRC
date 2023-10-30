@@ -159,8 +159,9 @@ int	Server::readFromExistingClient(int client_fd)
 	memset(&buf, 0, sizeof(buf));
 	nbytes = recv(client_fd, buf, sizeof (buf), 0);
 	client.set_read_buffer(buf);
-	std::cout << "read " << nbytes << " bytes in buf " << buf << std::endl;
+	std::cout << "read " << nbytes << " bytes in buf: " << buf;
 	std::cout << "get_read_buffer: " << client.get_read_buffer() << std::endl;
+
 	if (nbytes <= 0)
 	{
 		if (nbytes == 0) // Connection closed
@@ -169,16 +170,16 @@ int	Server::readFromExistingClient(int client_fd)
 			std::cout << "Error on receive" << std::endl;
 		close(client_fd); // Bye!
 	}
-	else if (client.get_read_buffer().find("\r\n") != std::string::npos)
+	else if (client.get_read_buffer().find("\n") != std::string::npos)
 	{
 		Message msg(&client, client.get_read_buffer());
+		client.clear_read_buffer();
 		Commands::execute(this, &msg);
-		sendToAllClients();
 	}
 	return(nbytes);
 }
 
-int	Server::sendToAllClients()
+int	Server::sendToAllClients(Message *msg)
 {
 	// We got some good data from a client
 	for(std::vector< pollfd >::iterator it = _pollfds.begin();
@@ -187,21 +188,15 @@ int	Server::sendToAllClients()
 		// don't send back to the server
 		if (this->_server_sock_fd == (*it).fd)
 			continue;
-		Client&		client = get_client((*it).fd);
-		//client.set_read_buffer(buf);
-		// process_data() before copying to writebuffer
-		client.set_write_buffer(client.get_read_buffer());
-		client.clear_read_buffer();
-		std::cout << "Received:  " << client.get_write_buffer() << std::endl;
 
-		if (send((*it).fd, "Server recieved:   ", 19, 0) == -1		// what's the 19?
-			|| send((*it).fd, client.get_write_buffer().c_str(), client.get_write_buffer().size(), 0) == -1)
+		if (send((*it).fd, (msg->get_sender())->get_nickname().c_str(), msg->get_sender()->get_nickname().size(), 0) == -1 
+			|| send((*it).fd, "th client send:  ", 17, 0) == -1
+			|| send((*it).fd, msg->get_payload().c_str(), msg->get_payload().size(), 0) == -1)
 		{
 			std::cout << "Error sending with send()." << std::endl;
 			throw "Error sending.";
 			return(-1);
 		}
-		client.clear_write_buffer();
 	}
 	return(0);
 }

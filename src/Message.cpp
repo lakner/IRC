@@ -10,6 +10,7 @@ Message::Message(Client *sender, std::string content) : _sender(sender),
 {
 	_recpnt = NULL;
 	_command = "";
+	parse();
 }
 
 Message::~Message()
@@ -42,9 +43,18 @@ void	Message::parse()
 {
 	if (_raw_content.rfind("CAP", 0) == 0)
 		_command = "CAP";
-	else if (_raw_content.rfind("PASS"))
+	else if (_raw_content.rfind("PASS", 0) == 0)
 		_command = "PASS";
 
-	if (_raw_content.find(_command) != std::string::npos)
+	if (!_command.empty() && _raw_content.find(_command) != std::string::npos)
 		_payload = _raw_content.erase(_raw_content.find(_command), _command.length());
+	else
+		_payload = _raw_content;
 }
+
+
+
+// std::string	Message::get_raw_content()
+// {
+// 	return (_raw_content);
+// }
