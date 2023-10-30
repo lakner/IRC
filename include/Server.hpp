@@ -37,7 +37,7 @@ class Server
 		void					add_client(int client_fd);
 		std::map<const int, Client>		_clients;
 		//std::map<std::string, Channel>	_channels;
-		void					sendToAllClients(char *buf, int nbytes);
+		void					sendToAllClients(char *buf);
 };
 
 #endif

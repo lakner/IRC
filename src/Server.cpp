@@ -162,33 +162,48 @@ int	Server::readFromExistingClient(int client_fd)
 	}
 	else
 	{
-		// We got some good data from a client
-		Client&		client = get_client(client_fd);
+		sendToAllClients(buf);
+	}
+	return(nbytes);
+}
+
+void Server::sendToAllClients(char *buf)
+{
+	// We got some good data from a client
+	for(std::vector< pollfd >::iterator it = _pollfds.begin();
+		it != _pollfds.end(); it++)
+	{
+		// don't send back to the server
+		if (this->_server_sock_fd == (*it).fd)
+			continue;
+		Client&		client = get_client((*it).fd);
 		client.set_read_buffer(buf);
 		// process_data() before copying to writebuffer
 		client.set_write_buffer(client.get_read_buffer());
 		client.clear_read_buffer();
 		std::cout << "Received:  " << client.get_write_buffer() << std::endl;
 
-		if (send(client_fd, "Server recieved:   ", 19, 0) == -1 || send(client_fd, client.get_write_buffer().c_str(), client.get_write_buffer().size(), 0) == -1)
+		if (send((*it).fd, "Server recieved:   ", 19, 0) == -1		// what's the 19?
+			|| send((*it).fd, client.get_write_buffer().c_str(), client.get_write_buffer().size(), 0) == -1)
 		{
 			std::cout << "Error sending with send()." << std::endl;
 			throw "Error sending.";
 		}
 		client.clear_write_buffer();
-		// for(std::vector< pollfd >::iterator it = _pollfds.begin();
-		// 	it != _pollfds.end(); it++)
-		// {
-		// 	// don't send back to the server
-		// 	if (this->_server_sock_fd == (*it).fd)
-		// 		continue;
-		// 	//std::cout << "Sending... " << get_write_buffer(void).size() << " bytes in buf: " << get_write_buffer(void) << " to " << (*it).fd << std::endl;
-		// 	if (send((*it).fd, buf, nbytes, 0) == -1)
-		// 	{
-		// 		std::cout << "Error sending with send()." << std::endl;
-		// 		throw "Error sending.";
-		// 	}
-		// 	client.clear_write_buffer();
-		// }
 	}
+
+	// std::cout << "Sending '" << buf <<"' to all clients "<< std::endl;
+	// for(std::vector< pollfd >::iterator it = _pollfds.begin();
+	// 	it != _pollfds.end(); it++)
+	// {
+	// 	// don't send back to the server
+	// 	if (this->_server_sock_fd == (*it).fd)
+	// 		continue;
+	// 	std::cout << "Sending... " << nbytes << " bytes in buf: " << buf << " to " << (*it).fd << std::endl;
+	// 	if (send((*it).fd, buf, nbytes, 0) == -1) 
+	// 	{
+	// 		std::cout << "Error sending with send()." << std::endl;
+	// 		throw "Error sending.";
+	// 	}
+	// }
 }
