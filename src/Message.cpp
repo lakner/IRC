@@ -39,7 +39,7 @@ std::string	Message::get_payload()
 }
 
 
-void	Message::parse()
+int	Message::parse()
 {
 	// strip the "\r\n"
 	_raw_content = _raw_content.substr(0, _raw_content.size() - std::string("\r\n").size());
@@ -54,35 +54,7 @@ void	Message::parse()
 	else if (_raw_content.rfind("PRIVMSG", 0) == 0)
 	{
 		_command = "PRIVMSG";;
-		std::string	recipient;
-   		std::stringstream ss(_raw_content);
-    	ss >> recipient >> recipient; // Read the second word (skipping leading whitespace)
-
-		std::map<const int, Client>::iterator it;
-
-		for (it = Server::get_clients().begin(); it != Server::get_clients().end(); it++) //segfaulting at odd fds
-		{
-    		std::cout << "1111" << std::endl;
-			Client& client = it->second;
-    		if (client.get_nickname() == recipient) 
-			{
-				std::cout << "111" << std::endl;
-        		_recpnt = &client; 
-        		break; 
-    		}
-			std::cout << "1121" << std::endl;
-		}
-		ss >> _payload;
-		std::cout << "Recipient is: "<< recipient << " with _recpnt " << _recpnt << std::endl;
-		std::cout << "Payload is: " << _payload << std::endl;
-		
-		if (!_recpnt)
-			send_to(_sender, "PRIVMSG: recipient not found.");
-		else if (! _payload.size())
-			send_to(_sender, "PRIVMSG: message not found.");
-		else
-			_payload = _payload.substr(1, _payload.size() - 1);
-		return ;
+		return(parse_privmsg());
 	}
 
 	if (!_command.empty() && _raw_content.find(_command) != std::string::npos)
@@ -91,6 +63,7 @@ void	Message::parse()
 		_payload = _raw_content.substr(_command.size() + 1, _raw_content.size() - (_command.size() + 3)); // +3 for KVIrc +2 for nc, because of \r\n instead of \n
 	else
 		_payload = _raw_content;
+	return 0;
 }
 
 int	Message::sendmsg()
@@ -125,4 +98,41 @@ int	Message::send_to(Client *new_recpnt, std::string content)
 		return(-1);
 	}
 	return (0);
+}
+
+int	Message::parse_privmsg()
+{
+	std::string	recipient;
+	std::stringstream ss(_raw_content);
+	ss >> recipient >> recipient; // Read the second word (skipping leading whitespace)
+
+	std::map<const int, Client>::iterator it;
+
+	for (it = Server::get_clients().begin(); it != Server::get_clients().end(); it++)
+	{
+		Client& client = it->second;
+		if (client.get_nickname() == recipient) 
+		{
+			_recpnt = &client; 
+			break; 
+		}
+	}
+	ss >> _payload;
+	std::cout << "Recipient is: "<< recipient << " with _recpnt " << _recpnt << std::endl;
+	std::cout << "Payload is: " << _payload << std::endl;
+	
+	if (!_recpnt)
+	{
+		send_to(_sender, "PRIVMSG: recipient not found.");
+		return -1;
+	}
+	else if (! _payload.size())
+	{
+		send_to(_sender, "PRIVMSG: message not found.");
+		return -1;
+	}
+	else
+		_payload = _payload.substr(0, _payload.size());
+	return 0;
+
 }

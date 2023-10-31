@@ -18,7 +18,7 @@ class Message
 		Message();
 		Message(Client *sender, std::string content);
 		~Message();
-		void		parse();
+		int			parse();
 		Client*		get_sender();
 		std::string	get_command();
 		std::string	get_payload();
@@ -34,6 +34,7 @@ class Message
 		std::string	_raw_content;
 		std::string	_command;
 		std::string	_payload;
+		int			parse_privmsg();
 		// Channel	*_channel;
 };
 
