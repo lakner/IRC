@@ -24,9 +24,9 @@ int	Commands::execute(Server *server, Message *msg)
 	else if (command == "USER" && msg->get_sender()->is_authd())
 		return (msg->get_sender()->set_username(msg->get_payload()), 0);
 	else if (command == "PRIVMSG" && msg->get_sender()->is_authd())
-		return (server->sendPrivate(msg));
+		return (server->send_private(msg));
 	else 
-		return(server->sendToAllClients(msg)); // maybe first send into the clients writebuffer
+		return(server->send_to_all_clients(msg)); // maybe first send into the clients writebuffer
 }
 
 int	Commands::exec_cap()

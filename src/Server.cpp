@@ -35,7 +35,7 @@ int	Server::prepare()
 		exit(1);
 	}
 
-	if (createListenerSocket(addrinfo) == NULL)
+	if (create_listener_socket(addrinfo) == NULL)
 	{
 		freeaddrinfo(addrinfo);
 		return -1;
@@ -47,7 +47,7 @@ int	Server::prepare()
 	return (this->_server_sock_fd);
 }
 
-struct addrinfo*	Server::createListenerSocket(struct addrinfo* addrinfo)
+struct addrinfo*	Server::create_listener_socket(struct addrinfo* addrinfo)
 {
 	struct addrinfo *p = NULL;
 	int yes = 1;
@@ -92,10 +92,10 @@ int	Server::run()
 			if ((*it).revents & POLLIN)
 			{
 				if ((*it).fd == this->_server_sock_fd)
-					newClientConnection();
+					new_client_connection();
 				else
 				{
-					if (readFromExistingClient((*it).fd) <= 0)
+					if (read_from_existing_client((*it).fd) <= 0)
 					{
 						std::map<const int, Client>::iterator it1 = _clients.find(it->fd);
 						if (it1 != _clients.end())
@@ -129,7 +129,7 @@ std::map<const int, Client>&	Server::get_clients()
 	return (_clients);
 }
 
-void	Server::newClientConnection()
+void	Server::new_client_connection()
 {
 	struct pollfd	pfd;
 	struct sockaddr client_addr;
@@ -159,7 +159,7 @@ void	Server::newClientConnection()
 	}
 }
 
-int	Server::readFromExistingClient(int client_fd)
+int	Server::read_from_existing_client(int client_fd)
 {
 	char	buf[256];
 	int		nbytes = 0;
@@ -190,7 +190,7 @@ int	Server::readFromExistingClient(int client_fd)
 	return(nbytes);
 }
 
-int	Server::sendPrivate(Message *msg)
+int	Server::send_private(Message *msg)
 {
 	if (!msg->get_sender()->is_authd())
 	{
@@ -209,7 +209,7 @@ int	Server::sendPrivate(Message *msg)
 	return (0);	
 }
 
-int	Server::sendToAllClients(Message *msg)
+int	Server::send_to_all_clients(Message *msg)
 {
 	if (!msg->get_sender()->is_authd())
 	{
