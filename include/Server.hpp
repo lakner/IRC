@@ -44,8 +44,7 @@ class Server
 		int									read_from_existing_client(int client_fd);
 		void								add_client(int client_fd);
 		static std::map<const int, Client>	_clients;
-
-		//std::map<std::string, Channel>	_channels;
+		std::map<std::string, Channel>		_channels;
 };
 
 #endif

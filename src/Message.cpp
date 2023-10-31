@@ -53,9 +53,11 @@ int	Message::parse()
 		_command = "USER";
 	else if (_raw_content.rfind("PRIVMSG", 0) == 0)
 	{
-		_command = "PRIVMSG";;
+		_command = "PRIVMSG";
 		return(parse_privmsg());
 	}
+	else if (_raw_content.rfind("JOIN", 0) == 0)
+		_command = "JOIN";
 
 	if (!_command.empty() && _raw_content.find(_command) != std::string::npos)
 	{
@@ -143,5 +145,4 @@ int	Message::parse_privmsg()
 		std::cout << "PRIVMSG: Payload is: " << _payload << std::endl;
 	}
 	return 0;
-
 }

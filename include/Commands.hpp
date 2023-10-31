@@ -9,16 +9,15 @@ class Message;
 
 class Commands
 {
-public:
-	~Commands();
-	static int	execute(Server *server, Message *msg);
+	public:
+		~Commands();
+		static int	execute(Server *server, Message *msg);
 
-private:
-    Commands();
-	static int	exec_pass(Server *server, Message *msg);
-	static int	exec_cap();
-
-
+	private:
+		Commands();
+		static int	exec_pass(Server *server, Message *msg);
+		static int	exec_cap();
+		static int	exec_join(Server *server, Message *msg);
 };
 
 #endif
