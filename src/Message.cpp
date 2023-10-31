@@ -42,8 +42,8 @@ std::string	Message::get_payload()
 void	Message::parse()
 {
 	// strip the "\r\n"
-	_raw_content = _raw_content.substr(0, _raw_content.size() - "\r\n".size());
-	if (_raw_content.rfind("CAP", 0) == 0)			
+	_raw_content = _raw_content.substr(0, _raw_content.size() - std::string("\r\n").size());
+	if (_raw_content.rfind("CAP", 0) == 0)
 		_command = "CAP";
 	else if (_raw_content.rfind("PASS", 0) == 0)
 		_command = "PASS";
