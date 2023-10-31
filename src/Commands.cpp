@@ -40,7 +40,7 @@ int Commands::exec_pass(Server *server, Message *msg)
 	if (msg->get_payload() == server->get_pass())
 	{
 		msg->get_sender()->authenticate(true);
-		send(msg->get_sender()->get_client_fd(), "Client authorized successfully!!!\n", 34, 0); //use sentClient() when created
+		send(msg->get_sender()->get_client_fd(), "Client authorized successfully!!!\r\n", 35, 0); //use sentClient() when created
 		return 0;
 	}
 	else

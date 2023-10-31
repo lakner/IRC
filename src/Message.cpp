@@ -41,6 +41,8 @@ std::string	Message::get_payload()
 
 void	Message::parse()
 {
+	// strip the "\r\n"
+	_raw_content = _raw_content.substr(0, _raw_content.size() - "\r\n".size());
 	if (_raw_content.rfind("CAP", 0) == 0)			
 		_command = "CAP";
 	else if (_raw_content.rfind("PASS", 0) == 0)
@@ -84,7 +86,9 @@ void	Message::parse()
 	}
 
 	if (!_command.empty() && _raw_content.find(_command) != std::string::npos)
-		_payload = _raw_content.substr(_command.size() + 1, _raw_content.size() - (_command.size() + 2)); // +3 for KVIrc +2 for nc, because of \r\n instead of \n
+		// You can get nc to send \r\n with the -c switch, like this:
+		// nc 127.0.0.1 6667 -c
+		_payload = _raw_content.substr(_command.size() + 1, _raw_content.size() - (_command.size() + 3)); // +3 for KVIrc +2 for nc, because of \r\n instead of \n
 	else
 		_payload = _raw_content;
 }
@@ -92,7 +96,7 @@ void	Message::parse()
 int	Message::sendmsg()
 {
 	// no authorization check here ,this is meant for the server sending messages
-	if (send(_recpnt->get_client_fd(), _payload.c_str(), _payload.length(), 0) == -1)
+	if (send(_recpnt->get_client_fd(), (_payload + "\r\n").c_str(), _payload.length(), 0) == -1)
 	{
 		std::cout << "Error sending with send()." << std::endl;
 		throw "Error sending.";
@@ -103,7 +107,7 @@ int	Message::sendmsg()
 
 int	Message::send_to(Client *new_recpnt)
 {
-	if (send(new_recpnt->get_client_fd(), _payload.c_str(), _payload.size(), 0) == -1)
+	if (send(new_recpnt->get_client_fd(), (_payload + "\r\n").c_str(), _payload.size(), 0) == -1)
 	{
 		std::cout << "Error sending with send()." << std::endl;
 		throw "Error sending.";
@@ -114,7 +118,7 @@ int	Message::send_to(Client *new_recpnt)
 
 int	Message::send_to(Client *new_recpnt, std::string content)
 {
-	if (send(new_recpnt->get_client_fd(), content.c_str(), content.size(), 0) == -1)
+	if (send(new_recpnt->get_client_fd(), (content + "\r\n").c_str(), content.size(), 0) == -1)
 	{
 		std::cout << "Error sending with send()." << std::endl;
 		throw "Error sending.";

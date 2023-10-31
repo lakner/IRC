@@ -194,7 +194,7 @@ int	Server::send_private(Message *msg)
 {
 	if (!msg->get_sender()->is_authd())
 	{
-		send(msg->get_sender()->get_client_fd(), "Not Authorized as a valid user!! Try to connect with: PASS password\n", 68, 0);
+		send(msg->get_sender()->get_client_fd(), "Not authorized as a valid user!! Try to connect with: PASS password\r\n", 69, 0);
 		return (0);
 	}
 
@@ -202,7 +202,7 @@ int	Server::send_private(Message *msg)
 		return (0);
 	if (send(msg->get_rcpnt()->get_client_fd(), (msg->get_sender())->get_nickname().c_str(), msg->get_sender()->get_nickname().size(), 0) == -1 
 			|| send(msg->get_rcpnt()->get_client_fd(), " client send:  ", 15, 0) == -1
-			|| send(msg->get_rcpnt()->get_client_fd(), (msg->get_payload() + "\n").c_str(), msg->get_payload().size() + 1, 0) == -1)
+			|| send(msg->get_rcpnt()->get_client_fd(), (msg->get_payload() + std::string("\r\n")).c_str(), msg->get_payload().size() + 2, 0) == -1)
 	{
 		std::cout << "Error sending with send()." << std::endl;
 		throw "Error sending.";
@@ -215,7 +215,7 @@ int	Server::send_to_all_clients(Message *msg)
 {
 	if (!msg->get_sender()->is_authd())
 	{
-		send(msg->get_sender()->get_client_fd(), "Not Authorized as a valid user!! Try to connect with: PASS password\n", 68, 0);
+		send(msg->get_sender()->get_client_fd(), "Not authorized as a valid user!! Try to connect with: PASS password\r\n", 69, 0);
 		return (0);
 	}
 	// We got some good data from a client
@@ -228,7 +228,7 @@ int	Server::send_to_all_clients(Message *msg)
 
 		if (send(it->first, (msg->get_sender())->get_nickname().c_str(), msg->get_sender()->get_nickname().size(), 0) == -1 
 			|| send(it->first, " client send:  ", 15, 0) == -1
-			|| send(it->first, msg->get_payload().c_str(), msg->get_payload().size(), 0) == -1)
+			|| send(it->first, (msg->get_payload() + std::string("\r\n")).c_str(), msg->get_payload().size() + 2, 0) == -1)
 		{
 			std::cout << "Error sending with send()." << std::endl;
 			throw "Error sending.";
