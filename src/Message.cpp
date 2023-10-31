@@ -129,13 +129,19 @@ int	Message::parse_privmsg()
 		send_to(_sender, "PRIVMSG: recipient not found.");
 		return -1;
 	}
-	else if (! _payload.size())
+		// With stringstream we only get the first word, 
+	// but we need the entire portion of the command following a ':'
+	if (_raw_content.find(":") == std::string::npos)
 	{
-		send_to(_sender, "PRIVMSG: message not found.");
+		send_to(_sender, "PRIVMSG: message not found.\n");
 		return -1;
 	}
 	else
-		_payload = _payload.substr(0, _payload.size());
+	{
+		_payload = _raw_content.substr(_raw_content.find(":") + 1, _raw_content.size());
+		std::cout << "PRIVMSG: Recipient is: "<< recipient << " with _recpnt " << _recpnt << std::endl;
+		std::cout << "PRIVMSG: Payload is: " << _payload << std::endl;
+	}
 	return 0;
 
 }
