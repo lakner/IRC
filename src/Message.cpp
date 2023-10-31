@@ -58,9 +58,14 @@ int	Message::parse()
 	}
 
 	if (!_command.empty() && _raw_content.find(_command) != std::string::npos)
+	{
 		// You can get nc to send \r\n with the -c switch, like this:
 		// nc 127.0.0.1 6667 -c
-		_payload = _raw_content.substr(_command.size() + 1, _raw_content.size() - (_command.size() + 3)); // +3 for KVIrc +2 for nc, because of \r\n instead of \n
+		// removed the +3/+2 because we're already stripping "\r\n" at the top
+		_payload = _raw_content.substr(_command.size(), _raw_content.size());
+		// remove leading whitespaces
+		_payload = _payload.substr(_payload.find_first_not_of(" \n\r\t\f\v"));
+	}
 	else
 		_payload = _raw_content;
 	return 0;
@@ -117,7 +122,6 @@ int	Message::parse_privmsg()
 			break; 
 		}
 	}
-	ss >> _payload;
 	std::cout << "Recipient is: "<< recipient << " with _recpnt " << _recpnt << std::endl;
 	std::cout << "Payload is: " << _payload << std::endl;
 	
