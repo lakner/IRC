@@ -80,3 +80,37 @@ void	Message::parse()
 	else
 		_payload = _raw_content;
 }
+
+int	Message::sendmsg()
+{
+	// no authorization check here ,this is meant for the server sending messages
+	if (send(_recpnt->get_client_fd(), _payload.c_str(), _payload.length(), 0) == -1)
+	{
+		std::cout << "Error sending with send()." << std::endl;
+		throw "Error sending.";
+		return(-1);
+	}
+	return (0);	
+}
+
+int	Message::send_to(Client *new_recpnt)
+{
+	if (send(new_recpnt->get_client_fd(), _payload.c_str(), _payload.size(), 0) == -1)
+	{
+		std::cout << "Error sending with send()." << std::endl;
+		throw "Error sending.";
+		return(-1);
+	}
+	return (0);
+}
+
+int	Message::send_to(Client *new_recpnt, std::string content)
+{
+	if (send(new_recpnt->get_client_fd(), content.c_str(), content.size(), 0) == -1)
+	{
+		std::cout << "Error sending with send()." << std::endl;
+		throw "Error sending.";
+		return(-1);
+	}
+	return (0);
+}

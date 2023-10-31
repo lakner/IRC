@@ -23,6 +23,9 @@ class Message
 		std::string	get_command();
 		std::string	get_payload();
 		Client*		get_rcpnt();
+		int			sendmsg();
+		int			send_to(Client *new_recpnt);
+		int			send_to(Client *new_recpnt, std::string content);
 		// std::string	get_raw_content();
 
 	private:
