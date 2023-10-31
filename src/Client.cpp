@@ -57,3 +57,18 @@ std::string		Client::get_nickname()
 {
 	return (_nickname);
 }
+
+void		Client::set_nickname(std::string name)
+{
+	_nickname = name;
+}
+
+std::string		Client::get_username()
+{
+	return (_username);
+}
+
+void		Client::set_username(std::string name)
+{
+	_username = name;
+}

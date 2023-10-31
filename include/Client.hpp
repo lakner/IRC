@@ -20,9 +20,14 @@ class	Client
 		void					authenticate(bool valid);
 		int						get_client_fd();
 		std::string				get_nickname();
+		void					set_nickname(std::string name);
+		std::string				get_username();
+		void					set_username(std::string name);
+
 	private:
 		int						_client_fd;
 		std::string				_nickname;
+		std::string				_username;
 		std::string				_read_buffer;
 		std::string				_write_buffer;
 		bool					_authenticated;

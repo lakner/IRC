@@ -4,6 +4,8 @@
 // {
 // }
 
+std::map<const int, Client> Server::_clients;
+
 Server::~Server()
 {
 }
@@ -95,6 +97,9 @@ int	Server::run()
 				{
 					if (readFromExistingClient((*it).fd) <= 0)
 					{
+						std::map<const int, Client>::iterator it1 = _clients.find(it->fd);
+						if (it1 != _clients.end())
+							_clients.erase(it1);
 						(*it).revents = 0;
 						it = this->_pollfds.erase(it);
 						continue;
@@ -117,6 +122,11 @@ Client&		Server::get_client(int client_fd)
 {
 	std::map<const int, Client>::iterator it = _clients.find(client_fd);
 	return (it->second);
+}
+
+std::map<const int, Client>&	Server::get_clients()
+{
+	return (_clients);
 }
 
 void	Server::newClientConnection()
@@ -162,6 +172,7 @@ int	Server::readFromExistingClient(int client_fd)
 	std::cout << "read " << nbytes << " bytes in buf: " << buf;
 	std::cout << "get_read_buffer: " << client.get_read_buffer() << std::endl;
 
+
 	if (nbytes <= 0)
 	{
 		if (nbytes == 0) // Connection closed
@@ -179,19 +190,43 @@ int	Server::readFromExistingClient(int client_fd)
 	return(nbytes);
 }
 
+int	Server::sendPrivate(Message *msg)
+{
+	if (!msg->get_sender()->is_authd())
+	{
+		send(msg->get_sender()->get_client_fd(), "Not Authorized as a valid user!! Try to connect with: PASS password\n", 68, 0);
+		return (0);
+	}
+
+	if (send(msg->get_rcpnt()->get_client_fd(), (msg->get_sender())->get_nickname().c_str(), msg->get_sender()->get_nickname().size(), 0) == -1 
+			|| send(msg->get_rcpnt()->get_client_fd(), " client send:  ", 15, 0) == -1
+			|| send(msg->get_rcpnt()->get_client_fd(), (msg->get_payload() + "\n").c_str(), msg->get_payload().size() + 1, 0) == -1)
+	{
+		std::cout << "Error sending with send()." << std::endl;
+		throw "Error sending.";
+		return(-1);
+	}
+	return (0);	
+}
+
 int	Server::sendToAllClients(Message *msg)
 {
+	if (!msg->get_sender()->is_authd())
+	{
+		send(msg->get_sender()->get_client_fd(), "Not Authorized as a valid user!! Try to connect with: PASS password\n", 68, 0);
+		return (0);
+	}
 	// We got some good data from a client
-	for(std::vector< pollfd >::iterator it = _pollfds.begin();
-		it != _pollfds.end(); it++)
+	for(std::map<const int, Client>::iterator it = _clients.begin();
+		it != _clients.end(); it++)
 	{
 		// don't send back to the server
-		if (this->_server_sock_fd == (*it).fd)
+		if (this->_server_sock_fd == it->first || !it->second.is_authd())
 			continue;
 
-		if (send((*it).fd, (msg->get_sender())->get_nickname().c_str(), msg->get_sender()->get_nickname().size(), 0) == -1 
-			|| send((*it).fd, "th client send:  ", 17, 0) == -1
-			|| send((*it).fd, msg->get_payload().c_str(), msg->get_payload().size(), 0) == -1)
+		if (send(it->first, (msg->get_sender())->get_nickname().c_str(), msg->get_sender()->get_nickname().size(), 0) == -1 
+			|| send(it->first, " client send:  ", 15, 0) == -1
+			|| send(it->first, msg->get_payload().c_str(), msg->get_payload().size(), 0) == -1)
 		{
 			std::cout << "Error sending with send()." << std::endl;
 			throw "Error sending.";

@@ -5,6 +5,10 @@
 
 #include <string>
 #include "Server.hpp"
+#include <sstream>
+#include "Client.hpp"
+#include <map>
+#include "Server.hpp"
 
 class Client;
 
@@ -23,7 +27,7 @@ class Message
 
 	private:
 		Client		*_sender;
-		Client		*_recpnt;
+		Client		*_recpnt;	//if defined use this, if not sent to all Clients
 		std::string	_raw_content;
 		std::string	_command;
 		std::string	_payload;
