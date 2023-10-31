@@ -198,6 +198,8 @@ int	Server::send_private(Message *msg)
 		return (0);
 	}
 
+	if (!msg->get_rcpnt())
+		return (0);
 	if (send(msg->get_rcpnt()->get_client_fd(), (msg->get_sender())->get_nickname().c_str(), msg->get_sender()->get_nickname().size(), 0) == -1 
 			|| send(msg->get_rcpnt()->get_client_fd(), " client send:  ", 15, 0) == -1
 			|| send(msg->get_rcpnt()->get_client_fd(), (msg->get_payload() + "\n").c_str(), msg->get_payload().size() + 1, 0) == -1)

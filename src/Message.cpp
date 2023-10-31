@@ -71,7 +71,15 @@ void	Message::parse()
 			std::cout << "1121" << std::endl;
 		}
 		ss >> _payload;
-		_payload = _payload.substr(1, _payload.size() - 1);
+		std::cout << "Recipient is: "<< recipient << " with _recpnt " << _recpnt << std::endl;
+		std::cout << "Payload is: " << _payload << std::endl;
+		
+		if (!_recpnt)
+			send_to(_sender, "PRIVMSG: recipient not found.");
+		else if (! _payload.size())
+			send_to(_sender, "PRIVMSG: message not found.");
+		else
+			_payload = _payload.substr(1, _payload.size() - 1);
 		return ;
 	}
 
