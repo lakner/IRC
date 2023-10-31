@@ -181,7 +181,7 @@ int	Server::read_from_existing_client(int client_fd)
 			std::cout << "Error on receive" << std::endl;
 		close(client_fd); // Bye!
 	}
-	else if (client.get_read_buffer().find("\n") != std::string::npos)
+	else if (client.get_read_buffer().find("\r\n") != std::string::npos)
 	{
 		Message msg(&client, client.get_read_buffer());
 		client.clear_read_buffer();
