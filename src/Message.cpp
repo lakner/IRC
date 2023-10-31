@@ -42,6 +42,7 @@ int	Message::parse()
 {
 	// strip the "\r\n"
 	_raw_content = _raw_content.substr(0, _raw_content.size() - std::string("\r\n").size());
+	std::cout << "Message::parse:: _raw_content after stripping CRLF: " << _raw_content << std::endl;
 	if (_raw_content.rfind("CAP", 0) == 0)
 		_command = "CAP";
 	else if (_raw_content.rfind("PASS", 0) == 0)
@@ -114,6 +115,7 @@ int	Message::parse_privmsg()
 
 	for (it = Server::get_clients().begin(); it != Server::get_clients().end(); it++)
 	{
+		// Check for ":" in the recipient here and throw an error?
 		Client& client = it->second;
 		if (client.get_nickname() == recipient) 
 		{
@@ -121,12 +123,10 @@ int	Message::parse_privmsg()
 			break; 
 		}
 	}
-	std::cout << "Recipient is: "<< recipient << " with _recpnt " << _recpnt << std::endl;
-	std::cout << "Payload is: " << _payload << std::endl;
-	
+
 	if (!_recpnt)
 	{
-		send_to(_sender, "PRIVMSG: recipient not found.");
+		send_to(_sender, "PRIVMSG: recipient not found.\n");
 		return -1;
 	}
 		// With stringstream we only get the first word, 

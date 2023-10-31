@@ -37,6 +37,7 @@ int	Commands::exec_cap()
 
 int Commands::exec_pass(Server *server, Message *msg)
 {
+	std::cout << "exec_pass: " << "msg->get_payload(): " << msg->get_payload() << " server->get_pass(): " << server->get_pass() << std::endl;
 	if (msg->get_payload() == server->get_pass())
 	{
 		msg->get_sender()->authenticate(true);
