@@ -185,7 +185,8 @@ int	Server::read_from_existing_client(int client_fd)
 	{
 		Message msg(&client, client.get_read_buffer());
 		client.clear_read_buffer();
-		Commands::execute(this, &msg);
+		if (msg.parse() == 0)
+			Commands::execute(this, &msg);
 	}
 	return(nbytes);
 }

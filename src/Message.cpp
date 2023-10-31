@@ -10,7 +10,6 @@ Message::Message(Client *sender, std::string content) : _sender(sender),
 {
 	_recpnt = NULL;
 	_command = "";
-	parse();
 }
 
 Message::~Message()
