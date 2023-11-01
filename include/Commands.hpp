@@ -6,6 +6,7 @@
 
 class Server;
 class Message;
+class Channel;
 
 class Commands
 {

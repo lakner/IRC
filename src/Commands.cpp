@@ -1,6 +1,7 @@
 #include "Commands.hpp"
 #include "Message.hpp"
 #include "Server.hpp"
+#include "Channel.hpp"
 #include <vector>
 #include <algorithm>
 
@@ -61,26 +62,26 @@ int Commands::exec_join(Server *server, Message *msg)
 	std::cout << "JOIN: Payload is: " << msg->get_payload() << std::endl;
 	
 	std::stringstream ss(msg->get_payload());
-	std::string channels, passwords;
+	std::string s_channels, s_passwords;
 
-	ss >> channels >> passwords;
-	std::cout << "JOIN: channels: " << channels << "\n\tPasswords are: " << passwords << std::endl;
+	ss >> s_channels >> s_passwords;
+	std::cout << "JOIN: channels: " << s_channels << "\n\tPasswords are: " << s_passwords << std::endl;
 
 	std::vector<std::string> vchannels, vpasswords;
 	
-	std::stringstream channelstr(channels);
-	while (channelstream.good())
+	std::stringstream channelstr(s_channels);
+	while (channelstr.good())
 	{
 		std::string ch;
 		std::getline(channelstr, ch, ',');
-		if (!s.rfind("#", 0) == 0)
+		if (!(ch.rfind("#", 0) == 0))
 		{
-			msg->sendto(msg->get_sender->get_client_fd(), "Channel names must start with '#'");
+			msg->send_to(msg->get_sender(), "Channel names must start with '#'");
 			return -1;
 		}
 		vchannels.push_back(ch);
 	}
-	std::stringstream passstr(channels);
+	std::stringstream passstr(s_passwords);
 	while (passstr.good())
 	{
 		std::string pass;
@@ -93,6 +94,34 @@ int Commands::exec_join(Server *server, Message *msg)
 	// std::cout << std::endl;
 
 	// TODO: Actually join the channels here
+	std::map<std::string, Channel>* channels = server->get_channels();
+	
+	for (unsigned int i = 0; i < vchannels.size(); i++)
+	{
+		int ret;
+		// new channel
+		if (channels->find(vchannels[i]) == channels->end())
+		{
+			if (i < vpasswords.size()) // create channel with password
+				server->add_channel(vchannels[i], vpasswords[i]);
+			else // no password provided
+				server->add_channel(vchannels[i], "");
+		}
+
+		// join the channel
+		if (i < vpasswords.size())
+			ret = (*channels)[vchannels[i]].add_user(msg->get_sender(), vpasswords[i]);
+		else
+			ret = (*channels)[vchannels[i]].add_user(msg->get_sender(), "");
+		
+		if (ret != 0)
+			msg->send_to(msg->get_sender(), "JOIN: Error joining channel, wrong password?");
+		else
+		{
+			msg->send_to(msg->get_sender(), "JOIN: Successfully joined channel " + vchannels[i] + "\n");
+			std::cout << msg->get_sender() << " joined channel " << vchannels[i] << std::endl;
+		}
+	}
 	return (0);
 }
 

@@ -239,3 +239,21 @@ int	Server::send_to_all_clients(Message *msg)
 	}
 	return(0);
 }
+
+std::map<std::string, Channel>*	Server::get_channels()
+{
+	return(&_channels);
+}
+
+void Server::add_channel(std::string name, std::string pass)
+{
+	if (_channels.find(name) == _channels.end())
+	{
+		//Channel channel(name, pass);
+		_channels[name] = Channel(name, pass);
+	}
+	else
+	{
+		std::cerr << "Server::add_channel: Trying to add a channel that already exists." << std::endl;
+	}
+}

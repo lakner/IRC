@@ -16,7 +16,7 @@
 #include "Client.hpp"
 #include "Message.hpp"
 #include "Commands.hpp"
-//#include "Channel.hpp"
+#include "Channel.hpp"
 
 class Client;
 
@@ -26,25 +26,27 @@ class Server
 		Server();
 		Server(char* port, char* password);
 		~Server();
-		int									prepare();
-		int									run();
-		Client&								get_client(int	client_fd);
-		const std::string					get_pass();
-		int									send_to_all_clients(Message *msg);
-		int 								send_private(Message *msg);
-		static std::map<const int, Client>&	get_clients();
+		int										prepare();
+		int										run();
+		Client&									get_client(int	client_fd);
+		const std::string						get_pass();
+		int										send_to_all_clients(Message *msg);
+		int 									send_private(Message *msg);
+		static std::map<const int, Client>&		get_clients();
+		std::map<std::string, Channel>*			get_channels();
+		void									add_channel(std::string name, std::string pass);
 		
 	private:
-		const char*							_port;
-		const std::string 					_password;
-		int									_server_sock_fd;
-		std::vector< pollfd >				_pollfds;
-		struct addrinfo*					create_listener_socket(struct addrinfo* addrinfo);
-		void								new_client_connection();
-		int									read_from_existing_client(int client_fd);
-		void								add_client(int client_fd);
-		static std::map<const int, Client>	_clients;
-		std::map<std::string, Channel>		_channels;
+		const char*								_port;
+		const std::string 						_password;
+		int										_server_sock_fd;
+		std::vector< pollfd >					_pollfds;
+		struct addrinfo*						create_listener_socket(struct addrinfo* addrinfo);
+		void									new_client_connection();
+		int										read_from_existing_client(int client_fd);
+		void									add_client(int client_fd);
+		static std::map<const int, Client>		_clients;
+		std::map<std::string, Channel>			_channels;
 };
 
 #endif
