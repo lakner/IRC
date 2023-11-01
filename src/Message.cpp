@@ -41,7 +41,8 @@ std::string	Message::get_payload()
 int	Message::parse()
 {
 	// strip the "\r\n"
-	_raw_content = _raw_content.substr(0, _raw_content.size() - std::string("\r\n").size());
+	if (_raw_content.find("\r\n") != std::string::npos)
+		_raw_content = _raw_content.substr(0, _raw_content.size() - std::string("\r\n").size());
 	std::cout << "Message::parse:: _raw_content after stripping CRLF: " << _raw_content << std::endl;
 	if (_raw_content.rfind("CAP", 0) == 0)
 		_command = "CAP";

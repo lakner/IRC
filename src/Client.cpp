@@ -35,7 +35,14 @@ void	Client::clear_write_buffer(void)
 
 void	Client::clear_read_buffer(void)
 {
-	_read_buffer.clear();
+	std::string::size_type pos = _read_buffer.find("\r\n");
+	if (pos != std::string::npos)
+	{
+		_read_buffer = _read_buffer.substr(pos + 2, _read_buffer.size());
+		std::cout << "Client::clear_read_buffer, new read buffer: " << _read_buffer << std::endl;
+	}
+	else 
+		_read_buffer.clear();
 }
 
 bool	Client::is_authd()

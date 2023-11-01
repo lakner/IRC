@@ -172,7 +172,6 @@ int	Server::read_from_existing_client(int client_fd)
 	std::cout << "read " << nbytes << " bytes in buf: " << buf;
 	std::cout << "get_read_buffer: " << client.get_read_buffer() << std::endl;
 
-
 	if (nbytes <= 0)
 	{
 		if (nbytes == 0) // Connection closed
@@ -180,15 +179,20 @@ int	Server::read_from_existing_client(int client_fd)
 		else // some other error
 			std::cout << "Error on receive" << std::endl;
 		close(client_fd); // Bye!
+		return (nbytes);
 	}
-	else if (client.get_read_buffer().find("\r\n") != std::string::npos)
+	while (client.get_read_buffer().find("\r\n") != std::string::npos)
 	{
 		std::cout << "Found CRLF in message, continuing" << std::endl;
-		Message msg(&client, client.get_read_buffer());
+		int pos = client.get_read_buffer().find("\r\n");
+		Message msg(&client, client.get_read_buffer().substr(0, pos + 2));
+		std::cout << "Read buffer contains: " << client.get_read_buffer() << std::endl
+				  << "-----END OF READ BUFFER-----" << std::endl;
 		client.clear_read_buffer();
 		if (msg.parse() == 0)
 			Commands::execute(this, &msg);
 	}
+	std::cout << "Done processing read buffer: " << client.get_read_buffer() << std::endl;
 	return(nbytes);
 }
 
