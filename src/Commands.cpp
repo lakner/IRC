@@ -2,6 +2,7 @@
 #include "Message.hpp"
 #include "Server.hpp"
 #include "Channel.hpp"
+#include "Numeric.hpp"
 #include <vector>
 #include <algorithm>
 
@@ -19,7 +20,9 @@ int	Commands::execute(Server *server, Message *msg)
 {
 	std::string command = msg->get_command();
 	if (command == "CAP")							// change to switch case
-		return (exec_cap());
+		return (exec_cap(msg));
+	else if (command == "PING")
+		return (exec_ping(msg));
 	else if (command == "PASS")
 		return (exec_pass(server, msg));
 	else if (command == "NICK" && msg->get_sender()->is_authd())
@@ -34,9 +37,16 @@ int	Commands::execute(Server *server, Message *msg)
 		return(server->send_to_all_clients(msg)); // maybe first send into the clients writebuffer
 }
 
-int	Commands::exec_cap()
+int	Commands::exec_ping(Message *msg)
+{
+	msg->send_to(msg->get_sender(), "PONG " + msg->get_payload());
+	return 0;
+}
+
+int	Commands::exec_cap(Message *msg)
 {
 	// we ignore CAP messages
+	msg->send_to(msg->get_sender(), ":irc.unknown.net CAP * LS :account-notify account-tag away-notify batch cap-notify chghost draft/relaymsg echo-message extended-join inspircd.org/poison inspircd.org/standard-replies invite-notify labeled-response message-tags multi-prefix sasl server-time setname userhost-in-names ");
 	return 0;
 }
 
@@ -46,7 +56,8 @@ int Commands::exec_pass(Server *server, Message *msg)
 	if (msg->get_payload() == server->get_pass())
 	{
 		msg->get_sender()->authenticate(true);
-		send(msg->get_sender()->get_client_fd(), "Client authorized successfully!!!\r\n", 35, 0); //use sentClient() when created
+		msg->send_to(msg->get_sender(), RPL_WELCOME);
+		//send(msg->get_sender()->get_client_fd(), "Client authorized successfully!!!\r\n", 35, 0); //use sentClient() when created
 		return 0;
 	}
 	else

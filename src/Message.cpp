@@ -46,6 +46,8 @@ int	Message::parse()
 	std::cout << "Message::parse:: _raw_content after stripping CRLF: " << _raw_content << std::endl;
 	if (_raw_content.rfind("CAP", 0) == 0)
 		_command = "CAP";
+	else if (_raw_content.rfind("PING", 0) == 0)
+		_command = "PING";
 	else if (_raw_content.rfind("PASS", 0) == 0)
 		_command = "PASS";
 	else if (_raw_content.rfind("NICK", 0) == 0)
