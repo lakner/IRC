@@ -52,8 +52,10 @@ int	Commands::exec_cap(Message *msg)
 
 int Commands::exec_pass(Server *server, Message *msg)
 {
-	std::cout << "exec_pass: " << "msg->get_payload(): " << msg->get_payload() << " server->get_pass(): " << server->get_pass() << std::endl;
-	if (msg->get_payload() == server->get_pass())
+	std::string payload = msg->get_payload();
+	payload.erase(0, payload.find_first_not_of(": "));
+	std::cout << "exec_pass: " << "payload: " << payload << " server->get_pass(): " << server->get_pass() << std::endl;
+	if (payload == server->get_pass())
 	{
 		msg->get_sender()->authenticate(true);
 		msg->send_to(msg->get_sender(), RPL_WELCOME);
