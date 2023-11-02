@@ -7,7 +7,7 @@
 class	Client
 {
 	public:
-		Client(int client_fd);
+		Client(int client_fd, std::string ip4v_addr);
 		~Client();
 
 		void					set_read_buffer(char *buffer);
@@ -23,11 +23,16 @@ class	Client
 		void					set_nickname(std::string name);
 		std::string				get_username();
 		void					set_username(std::string name);
+		std::string				get_full_client_identifier();
+		void					set_full_client_identifier(std::string ident);
 
 	private:
 		int						_client_fd;
+		std::string				_ipv4_addr;
 		std::string				_nickname;
 		std::string				_username;
+		std::string				_host;
+		std::string				_full_client_identifier;
 		std::string				_read_buffer;
 		std::string				_write_buffer;
 		bool					_authenticated;

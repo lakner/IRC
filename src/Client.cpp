@@ -2,7 +2,11 @@
 #include "Commands.hpp"
 #include <iostream>
 
-Client::Client(int client_fd) : _client_fd(client_fd), _nickname(std::to_string(client_fd)), _authenticated(false) { std::cout << _client_fd << std::endl;}
+Client::Client(int client_fd, std::string ipv4_addr) :
+		_client_fd(client_fd), 
+		_ipv4_addr(ipv4_addr),
+		_nickname(std::to_string(client_fd)),
+		_authenticated(false) { std::cout << _client_fd << std::endl;}
 
 Client::~Client()
 {
@@ -69,6 +73,8 @@ std::string		Client::get_nickname()
 void		Client::set_nickname(std::string name)
 {
 	_nickname = name;
+	_full_client_identifier =
+		_nickname + "!" + _username + "@" + _ipv4_addr;
 }
 
 std::string		Client::get_username()
@@ -79,4 +85,11 @@ std::string		Client::get_username()
 void		Client::set_username(std::string name)
 {
 	_username = name;
+	_full_client_identifier =
+		_nickname + "!" + _username + "@" + _ipv4_addr;
+}
+
+std::string		Client::get_full_client_identifier()
+{
+	return(_full_client_identifier);
 }
