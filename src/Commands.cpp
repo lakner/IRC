@@ -28,7 +28,7 @@ int	Commands::execute(Server *server, Message *msg)
 	else if (command == "NICK" && msg->get_sender()->is_authd())
 		return (exec_nick(msg, server));
 	else if (command == "USER" && msg->get_sender()->is_authd())
-		return (msg->get_sender()->set_username(msg->get_payload()), 0);
+		return (exec_user(msg));
 	else if (command == "PRIVMSG" && msg->get_sender()->is_authd())
 		return (server->send_private(msg));
 	else if (command == "JOIN" && msg->get_sender()->is_authd())
@@ -58,7 +58,6 @@ int Commands::exec_pass(Server *server, Message *msg)
 	if (payload == server->get_pass())
 	{
 		msg->get_sender()->authenticate(true);
-		msg->send_to(msg->get_sender(), RPL_WELCOME);
 		//send(msg->get_sender()->get_client_fd(), "Client authorized successfully!!!\r\n", 35, 0); //use sentClient() when created
 		return 0;
 	}
@@ -85,6 +84,23 @@ int Commands::exec_nick(Message *msg, Server *serv)
 const char* Commands::UsernameAlreadyExists::what() const throw()
 {
 	return ("Username already exist!\n");
+}
+
+int Commands::exec_user(Message *msg)
+{
+	std::stringstream ss (msg->get_payload());
+	std::string username, unused, realname;
+	Client *client = msg->get_sender();
+
+	ss >> username >> unused >> unused >> realname;
+	std::cout << "USER: username: " << username << " unused: " << unused << " realname: " << realname << std::endl;
+	client->set_username(username);
+
+	std::string response = std::string(RPL_WELCOME) + " " + username;
+	response += " :Welcome to the Internet Relay Network ";
+	response += client->get_full_client_identifier();
+	msg->send_to(client, response);
+	return 0;
 }
 
 // JOIN <channels> <passwords>
