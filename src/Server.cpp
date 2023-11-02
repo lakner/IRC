@@ -111,9 +111,9 @@ int	Server::run()
 	}
 }
 
-void	Server::add_client(int client_fd)
+void	Server::add_client(int client_fd, std::string ip_v4_addr)
 {
-	Client		new_client(client_fd);
+	Client		new_client(client_fd, ip_v4_addr);
 
 	//std::cout << "ADD CLIENT: " << new_client.get_client_fd() << std::endl;
 	_clients.insert(std::pair<int, Client>(client_fd, new_client));
@@ -152,7 +152,7 @@ void	Server::new_client_connection()
 	else
 	{
 		fcntl(new_client_socket, F_SETFL, O_NONBLOCK);
-		add_client(new_client_socket);
+		add_client(new_client_socket, read_client_ipv4_address(client_addr));
 		pfd.fd = new_client_socket;
 		pfd.events = POLLIN; // expand events later
 		pfd.revents = 0;
@@ -202,7 +202,7 @@ int	Server::send_private(Message *msg)
 {
 	if (!msg->get_sender()->is_authd())
 	{
-		send(msg->get_sender()->get_client_fd(), "Not authorized as a valid user!! Try to connect with: PASS password\r\n", 69, 0);
+		send(msg->get_sender()->get_client_fd(), "Not authorized as a valid user! Try connecting with: PASS password\r\n", 69, 0);
 		return (0);
 	}
 
@@ -262,4 +262,15 @@ void Server::add_channel(std::string name, std::string pass)
 	{
 		std::cerr << "Server::add_channel: Trying to add a channel that already exists." << std::endl;
 	}
+}
+
+std::string	Server::read_client_ipv4_address(struct sockaddr& client_addr)
+{
+	struct sockaddr_in *ip_v4_addr = (struct sockaddr_in*) &client_addr;
+	struct in_addr ip_addr = ip_v4_addr->sin_addr;
+	char ip_str[INET_ADDRSTRLEN];
+
+	inet_ntop(AF_INET, &ip_addr, ip_str, INET_ADDRSTRLEN);
+	std::cout << "New client IP address: " << ip_str << std::endl;
+	return(std::string(ip_str));
 }
