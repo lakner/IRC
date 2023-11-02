@@ -153,6 +153,7 @@ void	Server::new_client_connection()
 	{
 		fcntl(new_client_socket, F_SETFL, O_NONBLOCK);
 		add_client(new_client_socket, read_client_ipv4_address(client_addr));
+
 		pfd.fd = new_client_socket;
 		pfd.events = POLLIN; // expand events later
 		pfd.revents = 0;

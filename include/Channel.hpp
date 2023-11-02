@@ -18,7 +18,11 @@ class	Channel
 	private:
 		std::string						_channel_name;
 		std::string						_password;
+		std::string						_topic;
 		std::map<std::string, Client*>	_client_list;
+		void							notify_user_joined(Client *client);
+		void							send_topic(Client *client);
+		void							send_user_list(Client *client);
 
 };
 
