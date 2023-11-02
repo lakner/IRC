@@ -1,4 +1,5 @@
 #include "Client.hpp"
+#include "Commands.hpp"
 #include <iostream>
 
 Client::Client(int client_fd) : _client_fd(client_fd), _nickname(std::to_string(client_fd)), _authenticated(false) { std::cout << _client_fd << std::endl;}

@@ -13,6 +13,7 @@
 #include <netinet/in.h>
 #include <poll.h>
 #include <map>
+#include <exception>
 #include "Client.hpp"
 #include "Message.hpp"
 #include "Commands.hpp"

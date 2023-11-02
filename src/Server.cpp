@@ -115,6 +115,7 @@ void	Server::add_client(int client_fd)
 {
 	Client		new_client(client_fd);
 
+	//std::cout << "ADD CLIENT: " << new_client.get_client_fd() << std::endl;
 	_clients.insert(std::pair<int, Client>(client_fd, new_client));
 }
 
@@ -142,6 +143,7 @@ void	Server::new_client_connection()
 	new_client_socket = accept(this->_server_sock_fd,
 				&client_addr,
 				&client_addr_len);
+	std::cout << "NEW CLIENT SOCKET: " << new_client_socket << std::endl;
 	if (new_client_socket == -1)
 	{
 		std::cout << "accept() failed, terminating" << std::endl;

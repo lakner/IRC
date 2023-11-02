@@ -26,7 +26,7 @@ int	Commands::execute(Server *server, Message *msg)
 	else if (command == "PASS")
 		return (exec_pass(server, msg));
 	else if (command == "NICK" && msg->get_sender()->is_authd())
-		return (exec_nick(msg));
+		return (exec_nick(msg, server));
 	else if (command == "USER" && msg->get_sender()->is_authd())
 		return (msg->get_sender()->set_username(msg->get_payload()), 0);
 	else if (command == "PRIVMSG" && msg->get_sender()->is_authd())
@@ -66,10 +66,25 @@ int Commands::exec_pass(Server *server, Message *msg)
 		return 1;
 }
 
-int Commands::exec_nick(Message *msg)
+int Commands::exec_nick(Message *msg, Server *serv)
 {
-	msg->get_sender()->set_nickname(msg->get_payload());
-	return 0;
+	std::string n_name = msg->get_payload();
+	if (nickname_exists(n_name, serv))
+	{
+		//throw Commands::UsernameAlreadyExists();
+		msg->send_to(msg->get_sender(), ERR_NICKNAMEINUSE);
+		return (433);
+	}
+	else
+	{
+		msg->get_sender()->set_nickname(n_name);
+		return 0;
+	}
+}
+
+const char* Commands::UsernameAlreadyExists::what() const throw()
+{
+	return ("Username already exist!\n");
 }
 
 // JOIN <channels> <passwords>
@@ -142,5 +157,20 @@ int Commands::exec_join(Server *server, Message *msg)
 		}
 	}
 	return (0);
+}
+
+int nickname_exists(std::string name, Server *serv) {
+
+	static std::map<const int, Client>& clientMap = serv->get_clients();
+    std::map<const int, Client>::iterator it = clientMap.begin();
+
+    for (; it != clientMap.end(); it++) {
+        Client cl = it->second;
+
+        if (cl.get_nickname() == name)
+            return 1; // Nickname found
+    }
+
+    return 0; // Nickname not found
 }
 
