@@ -26,7 +26,7 @@ int	Commands::execute(Server *server, Message *msg)
 	else if (command == "PASS")
 		return (exec_pass(server, msg));
 	else if (command == "NICK" && msg->get_sender()->is_authd())
-		return (msg->get_sender()->set_nickname(msg->get_payload()), 0);
+		return (exec_nick(msg));
 	else if (command == "USER" && msg->get_sender()->is_authd())
 		return (msg->get_sender()->set_username(msg->get_payload()), 0);
 	else if (command == "PRIVMSG" && msg->get_sender()->is_authd())
@@ -62,6 +62,12 @@ int Commands::exec_pass(Server *server, Message *msg)
 	}
 	else
 		return 1;
+}
+
+int Commands::exec_nick(Message *msg)
+{
+	msg->get_sender()->set_nickname(msg->get_payload());
+	return 0;
 }
 
 // JOIN <channels> <passwords>
