@@ -1,4 +1,5 @@
 #include "Message.hpp"
+#include "Numeric.hpp"
 
 Message::Message()
 {
@@ -61,6 +62,15 @@ int	Message::parse()
 	}
 	else if (_raw_content.rfind("JOIN", 0) == 0)
 		_command = "JOIN";
+	else
+	{
+		std::stringstream ss(_raw_content);
+    	std::string first_word;
+
+		ss >> first_word;
+		send_to(get_sender(), std::string(HOSTNAME) + std::string(ERR_ALREADYREGISTRED) + " " + get_sender()->get_nickname() + first_word + " :Unknown command");
+		return -1;
+	}
 
 	if (!_command.empty() && _raw_content.find(_command) != std::string::npos)
 	{
@@ -69,7 +79,7 @@ int	Message::parse()
 		// removed the +3/+2 because we're already stripping "\r\n" at the top
 		_payload = _raw_content.substr(_command.size(), std::string::npos);
 		// remove leading whitespaces
-		if (!_payload.empty())
+		if (!_payload.empty() && _payload.find_first_not_of(" \n\r\t\f\v") < _payload.size())
 			_payload = _payload.substr(_payload.find_first_not_of(" \n\r\t\f\v"));
 	}
 	else

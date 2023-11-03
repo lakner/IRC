@@ -28,7 +28,7 @@ int	Commands::execute(Server *server, Message *msg)
 		return (exec_pass(server, msg));
 	else if (command == "NICK" && msg->get_sender()->is_authd())
 		return (exec_nick(msg, server));
-	else if (command == "USER" && msg->get_sender()->is_authd())
+	else if (command == "USER" && msg->get_sender()->is_authd() == 1)
 		return (exec_user(msg));
 	else if (command == "PRIVMSG" && msg->get_sender()->is_authd())
 		return (server->send_private(msg));
@@ -58,12 +58,7 @@ int Commands::exec_pass(Server *server, Message *msg)
 	std::cout << "exec_pass: " << "payload: " << payload << " server->get_pass(): " << server->get_pass() << std::endl;
 	if (payload == server->get_pass() && !msg->get_sender()->is_authd())
 	{
-		msg->get_sender()->authenticate(true);
-		return 0;
-	}
-	else if (msg->get_sender()->is_authd())
-	{
-		msg->send_to(msg->get_sender(), std::string(HOSTNAME) + std::string(ERR_ALREADYREGISTRED));
+		msg->get_sender()->authenticate(1);
 		return 0;
 	}
 	else if (payload.empty())
@@ -71,11 +66,17 @@ int Commands::exec_pass(Server *server, Message *msg)
 		msg->send_to(msg->get_sender(), std::string(HOSTNAME) + std::string(ERR_NEEDMOREPARAMS));
 		return 0;
 	}
+	else if (msg->get_sender()->is_authd() != 0)
+	{
+		msg->send_to(msg->get_sender(), std::string(HOSTNAME) + std::string(ERR_ALREADYREGISTRED) + " " + msg->get_sender()->get_nickname() + " :You may not reregister");
+		return 0;
+	}
 	return 1;
 }
 
 bool is_valid_nickname(std::string name)
 {
+	// check for valid Characters 
 	if (name == name)
 		return true;
 	return true;
@@ -91,17 +92,16 @@ int Commands::exec_nick(Message *msg, Server *serv)
 	}
 	else if (nickname_exists(n_name, serv))
 	{
-		msg->send_to(msg->get_sender(), ERR_NICKNAMEINUSE);
+		msg->send_to(msg->get_sender(), std::string(HOSTNAME) + ERR_NICKNAMEINUSE + " " + msg->get_sender()->get_nickname() + " " + n_name + " :Nickname is already in use.");
 		return (atoi(ERR_NICKNAMEINUSE));
 	}
 	else if (n_name.empty())
 	{
-		msg->send_to(msg->get_sender(), ERR_NONICKNAMEGIVEN);
+		msg->send_to(msg->get_sender(), std::string(HOSTNAME) + ERR_NONICKNAMEGIVEN + " " + msg->get_sender()->get_nickname() + " :No nickname given");
 		return (atoi(ERR_NONICKNAMEGIVEN));
 	}
 	else
 	{
-		std::cout << "test" << std::endl;
 		std::string to_send = ":" + msg->get_sender()->get_full_client_identifier() + " NICK :" + n_name;
 		msg->send_to(msg->get_sender(), to_send);
 		msg->get_sender()->set_nickname(n_name);
@@ -117,6 +117,13 @@ const char* Commands::UsernameAlreadyExists::what() const throw()
 
 int Commands::exec_user(Message *msg)
 {
+	if (msg->get_sender()->get_nickname().empty())
+		return -1;
+	if (!msg->get_sender()->get_username().empty())
+	{
+		msg->send_to(msg->get_sender(), std::string(HOSTNAME) + std::string(ERR_ALREADYREGISTRED) + " " + msg->get_sender()->get_nickname() + " :You may not reregister");
+		return (atoi(ERR_ALREADYREGISTRED));
+	}
 	std::stringstream ss (msg->get_payload());
 	std::string username, unused, realname;
 	Client *client = msg->get_sender();
@@ -125,6 +132,7 @@ int Commands::exec_user(Message *msg)
 	std::cout << "USER: username: " << username << " unused: " << unused << " realname: " << realname << std::endl;
 	client->set_username(username);
 
+	msg->get_sender()->authenticate(2);
 	std::string response = ":127.0.0.1 " + std::string(RPL_WELCOME) + " " + username;
 	response += " :Welcome to the Internet Relay Network ";
 	response += client->get_full_client_identifier();

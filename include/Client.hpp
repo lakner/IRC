@@ -17,7 +17,7 @@ class	Client
 		void					clear_read_buffer(void);
 		void					clear_write_buffer(void);
 		bool					is_authd();
-		void					authenticate(bool valid);
+		void					authenticate(int status);
 		int						get_client_fd();
 		std::string				get_nickname();
 		void					set_nickname(std::string name);
@@ -35,7 +35,7 @@ class	Client
 		std::string				_full_client_identifier;
 		std::string				_read_buffer;
 		std::string				_write_buffer;
-		bool					_authenticated;
+		int						_authenticated; //0: nothing, 1: passwd correct, 2: Logged in with USER and NICKNAME
 
 };
 

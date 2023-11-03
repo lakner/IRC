@@ -6,7 +6,7 @@ Client::Client(int client_fd, std::string ipv4_addr) :
 		_client_fd(client_fd), 
 		_ipv4_addr(ipv4_addr),
 		_nickname(""),
-		_authenticated(false) { std::cout << _client_fd << std::endl;}
+		_authenticated(0) { std::cout << _client_fd << std::endl;}
 
 Client::~Client()
 {
@@ -55,9 +55,9 @@ bool	Client::is_authd()
 	return _authenticated;
 }
 
-void	Client::authenticate(bool valid)
+void	Client::authenticate(int status)
 {
-	_authenticated = valid;
+	_authenticated = status;
 }
 
 int		Client::get_client_fd()
