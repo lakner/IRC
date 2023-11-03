@@ -5,7 +5,7 @@
 Client::Client(int client_fd, std::string ipv4_addr) :
 		_client_fd(client_fd), 
 		_ipv4_addr(ipv4_addr),
-		_nickname(std::to_string(client_fd)),
+		_nickname(""),
 		_authenticated(false) { std::cout << _client_fd << std::endl;}
 
 Client::~Client()

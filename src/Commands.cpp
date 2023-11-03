@@ -47,7 +47,7 @@ int	Commands::exec_ping(Message *msg)
 int	Commands::exec_cap(Message *msg)
 {
 	// we ignore CAP messages
-	msg->send_to(msg->get_sender(), ":irc.unknown.net CAP * LS :account-notify account-tag away-notify batch cap-notify chghost draft/relaymsg echo-message extended-join inspircd.org/poison inspircd.org/standard-replies invite-notify labeled-response message-tags multi-prefix sasl server-time setname userhost-in-names ");
+	msg->send_to(msg->get_sender(), std::string(HOSTNAME) + ":irc.unknown.net CAP * LS :account-notify account-tag away-notify batch cap-notify chghost draft/relaymsg echo-message extended-join inspircd.org/poison inspircd.org/standard-replies invite-notify labeled-response message-tags multi-prefix sasl server-time setname userhost-in-names ");
 	return 0;
 }
 
@@ -63,31 +63,51 @@ int Commands::exec_pass(Server *server, Message *msg)
 	}
 	else if (msg->get_sender()->is_authd())
 	{
-		msg->send_to(msg->get_sender(), ERR_ALREADYREGISTRED);
+		msg->send_to(msg->get_sender(), std::string(HOSTNAME) + std::string(ERR_ALREADYREGISTRED));
 		return 0;
 	}
 	else if (payload.empty())
 	{
-		msg->send_to(msg->get_sender(), std::string(ERR_NEEDMOREPARAMS));
+		msg->send_to(msg->get_sender(), std::string(HOSTNAME) + std::string(ERR_NEEDMOREPARAMS));
 		return 0;
 	}
 	return 1;
 }
 
+bool is_valid_nickname(std::string name)
+{
+	if (name == name)
+		return true;
+	return true;
+}
+
 int Commands::exec_nick(Message *msg, Server *serv)
 {
 	std::string n_name = msg->get_payload();
-	if (nickname_exists(n_name, serv))
+	if(!is_valid_nickname(n_name))
 	{
-		//throw Commands::UsernameAlreadyExists();
+		msg->send_to(msg->get_sender(), ERR_ERRONEUSNICKNAME);
+		return (atoi(ERR_ERRONEUSNICKNAME));
+	}
+	else if (nickname_exists(n_name, serv))
+	{
 		msg->send_to(msg->get_sender(), ERR_NICKNAMEINUSE);
-		return (433);
+		return (atoi(ERR_NICKNAMEINUSE));
+	}
+	else if (n_name.empty())
+	{
+		msg->send_to(msg->get_sender(), ERR_NONICKNAMEGIVEN);
+		return (atoi(ERR_NONICKNAMEGIVEN));
 	}
 	else
 	{
+		std::cout << "test" << std::endl;
+		std::string to_send = ":" + msg->get_sender()->get_full_client_identifier() + " NICK :" + n_name;
+		msg->send_to(msg->get_sender(), to_send);
 		msg->get_sender()->set_nickname(n_name);
 		return 0;
 	}
+	return 1;
 }
 
 const char* Commands::UsernameAlreadyExists::what() const throw()
@@ -105,7 +125,7 @@ int Commands::exec_user(Message *msg)
 	std::cout << "USER: username: " << username << " unused: " << unused << " realname: " << realname << std::endl;
 	client->set_username(username);
 
-	std::string response = std::string(RPL_WELCOME) + " " + username;
+	std::string response = ":127.0.0.1 " + std::string(RPL_WELCOME) + " " + username;
 	response += " :Welcome to the Internet Relay Network ";
 	response += client->get_full_client_identifier();
 	msg->send_to(client, response);

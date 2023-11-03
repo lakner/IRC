@@ -62,7 +62,6 @@ int	Message::parse()
 	else if (_raw_content.rfind("JOIN", 0) == 0)
 		_command = "JOIN";
 
-	std::cout << "tesssst" << std::endl;
 	if (!_command.empty() && _raw_content.find(_command) != std::string::npos)
 	{
 		// You can get nc to send \r\n with the -c switch, like this:
@@ -75,7 +74,6 @@ int	Message::parse()
 	}
 	else
 		_payload = _raw_content;
-	std::cout << "tesssst" << std::endl;
 	return 0;
 }
 
@@ -98,9 +96,9 @@ int	Message::send_to(Client *new_recpnt)
 
 int	Message::send_to(Client *new_recpnt, std::string content)
 {
-	char hostname[64] = "127.0.0.1";
-	//gethostname(hostname, sizeof(hostname));
-	content = std::string(":") + hostname + " " + content;
+	// char hostname[64] = ":127.0.0.1";
+	// //gethostname(hostname, sizeof(hostname));
+	// content = std::string(":") + hostname + " " + content;
 	if (send(new_recpnt->get_client_fd(), (content + "\r\n").c_str(), content.size() + 2, 0) == -1)
 	{
 		std::cout << "Error sending with send()." << std::endl;
