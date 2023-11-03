@@ -6,6 +6,7 @@
 #include <vector>
 #include <algorithm>
 
+
 Commands::Commands()
 {
 
@@ -55,14 +56,22 @@ int Commands::exec_pass(Server *server, Message *msg)
 	std::string payload = msg->get_payload();
 	payload.erase(0, payload.find_first_not_of(": "));
 	std::cout << "exec_pass: " << "payload: " << payload << " server->get_pass(): " << server->get_pass() << std::endl;
-	if (payload == server->get_pass())
+	if (payload == server->get_pass() && !msg->get_sender()->is_authd())
 	{
 		msg->get_sender()->authenticate(true);
-		//send(msg->get_sender()->get_client_fd(), "Client authorized successfully!!!\r\n", 35, 0); //use sentClient() when created
 		return 0;
 	}
-	else
-		return 1;
+	else if (msg->get_sender()->is_authd())
+	{
+		msg->send_to(msg->get_sender(), ERR_ALREADYREGISTRED);
+		return 0;
+	}
+	else if (payload.empty())
+	{
+		msg->send_to(msg->get_sender(), std::string(ERR_NEEDMOREPARAMS));
+		return 0;
+	}
+	return 1;
 }
 
 int Commands::exec_nick(Message *msg, Server *serv)

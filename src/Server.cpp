@@ -203,7 +203,7 @@ int	Server::send_private(Message *msg)
 {
 	if (!msg->get_sender()->is_authd())
 	{
-		send(msg->get_sender()->get_client_fd(), "Not authorized as a valid user! Try connecting with: PASS password\r\n", 69, 0);
+		send(msg->get_sender()->get_client_fd(), "Client not authorized! Try connecting with: PASS password\r\n", 59, 0);
 		return (0);
 	}
 
