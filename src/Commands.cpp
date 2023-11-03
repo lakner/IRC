@@ -119,11 +119,11 @@ int Commands::exec_user(Message *msg)
 {
 	if (msg->get_sender()->get_nickname().empty())
 		return -1;
-	if (!msg->get_sender()->get_username().empty())
-	{
-		msg->send_to(msg->get_sender(), std::string(HOSTNAME) + std::string(ERR_ALREADYREGISTRED) + " " + msg->get_sender()->get_nickname() + " :You may not reregister");
-		return (atoi(ERR_ALREADYREGISTRED));
-	}
+	// if (!msg->get_sender()->get_username().empty())
+	// {
+	// 	msg->send_to(msg->get_sender(), std::string(HOSTNAME) + std::string(ERR_ALREADYREGISTRED) + " " + msg->get_sender()->get_nickname() + " :You may not reregister");
+	// 	return (atoi(ERR_ALREADYREGISTRED));
+	// }
 	std::stringstream ss (msg->get_payload());
 	std::string username, unused, realname;
 	Client *client = msg->get_sender();
@@ -133,7 +133,7 @@ int Commands::exec_user(Message *msg)
 	client->set_username(username);
 
 	msg->get_sender()->authenticate(2);
-	std::string response = ":127.0.0.1 " + std::string(RPL_WELCOME) + " " + username;
+	std::string response = ":127.0.0.1 " + std::string(RPL_WELCOME) + " " + msg->get_sender()->get_nickname();
 	response += " :Welcome to the Internet Relay Network ";
 	response += client->get_full_client_identifier();
 	msg->send_to(client, response);
