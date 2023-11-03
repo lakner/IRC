@@ -98,7 +98,7 @@ int	Message::send_to(Client *new_recpnt, std::string content)
 	char hostname[64] = "127.0.0.1";
 	//gethostname(hostname, sizeof(hostname));
 	content = std::string(":") + hostname + " " + content;
-	if (send(new_recpnt->get_client_fd(), (content + "\r\n").c_str(), content.size(), 0) == -1)
+	if (send(new_recpnt->get_client_fd(), (content + "\r\n").c_str(), content.size() + 2, 0) == -1)
 	{
 		std::cout << "Error sending with send()." << std::endl;
 		throw "Error sending.";
