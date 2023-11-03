@@ -29,6 +29,7 @@ class Commands
 		static int	exec_cap(Message *msg);
 		static int	exec_invite(Server *server, Message *msg);
 		static int	exec_kick(Server *server, Message *msg);
+		static int	exec_privmsg(Server *server, Message *msg);
 };
 
 int		nickname_exists(std::string name, Server *serv);

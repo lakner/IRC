@@ -22,6 +22,7 @@ class Message
 		Client*		get_sender();
 		std::string	get_command();
 		std::string	get_payload();
+		std::string	get_raw_content();
 		Client*		get_rcpnt();
 		int			sendmsg();
 		int			send_to(Client *new_recpnt);
@@ -34,7 +35,6 @@ class Message
 		std::string	_raw_content;
 		std::string	_command;
 		std::string	_payload;
-		int			parse_privmsg();
 		// Channel	*_channel;
 };
 

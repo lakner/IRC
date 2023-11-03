@@ -199,26 +199,11 @@ int	Server::read_from_existing_client(int client_fd)
 	return(nbytes);
 }
 
-int	Server::send_private(Message *msg)
-{
-	if (!msg->get_sender()->is_authd())
-	{
-		send(msg->get_sender()->get_client_fd(), "Client not authorized! Try connecting with: PASS password\r\n", 59, 0);
-		return (0);
-	}
+// int	Server::send_private(Message *msg)
+// {
 
-	if (!msg->get_rcpnt())
-		return (0);
-	if (send(msg->get_rcpnt()->get_client_fd(), (msg->get_sender())->get_nickname().c_str(), msg->get_sender()->get_nickname().size(), 0) == -1 
-			|| send(msg->get_rcpnt()->get_client_fd(), " client sent: '", 15, 0) == -1
-			|| send(msg->get_rcpnt()->get_client_fd(), (msg->get_payload() + std::string("'\r\n")).c_str(), msg->get_payload().size() + 3, 0) == -1)
-	{
-		std::cout << "Error sending with send()." << std::endl;
-		throw "Error sending.";
-		return(-1);
-	}
-	return (0);
-}
+// 	return (0);
+// }
 
 int	Server::send_to_all_clients(Message *msg)
 {

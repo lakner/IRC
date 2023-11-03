@@ -32,7 +32,9 @@ int	Commands::execute(Server *server, Message *msg)
 	else if (command == "USER" && msg->get_sender()->is_authd() == 1)
 		return (exec_user(msg));
 	else if (command == "PRIVMSG" && msg->get_sender()->is_authd())
-		return (server->send_private(msg));
+	{
+		return(exec_privmsg(server, msg));
+	}
 	else if (command == "JOIN" && msg->get_sender()->is_authd())
 		return(exec_join(server, msg));
 	else if (command == "INVITE" && msg->get_sender()->is_authd())
@@ -324,20 +326,76 @@ int Commands::exec_join(Server *server, Message *msg)
 int nickname_exists(std::string name, Server *serv) {
 
 	static std::map<const int, Client>& clientMap = serv->get_clients();
-    std::map<const int, Client>::iterator it = clientMap.begin();
+	std::map<const int, Client>::iterator it = clientMap.begin();
 
-    for (; it != clientMap.end(); it++) {
-        Client cl = it->second;
+	for (; it != clientMap.end(); it++) {
+		Client cl = it->second;
 
-        if (cl.get_nickname() == name)
-            return 1; // Nickname found
-    }
+	if (cl.get_nickname() == name)
+		return 1; // Nickname found
+	}
 
-    return 0; // Nickname not found
+	return 0; // Nickname not found
 }
 
+int	Commands::exec_privmsg(Server *server, Message *msg)
+{
+	std::string	s_recipient;
+	std::stringstream ss(msg->get_raw_content());
+	std::string payload;
+	ss >> s_recipient >> s_recipient; // Read the second word (skipping leading whitespace)
+	Client *recpnt = NULL;
 int channel_exists(std::string channel_name, Server *server, Channel& myChannel) {
 
+	(void) server;
+
+	std::map<const int, Client>::iterator it;
+	for (it = Server::get_clients().begin(); it != Server::get_clients().end(); it++)
+	{
+		// Check for ":" in the recipient here and throw an error?
+		Client* client = &(it->second);
+		if (client->get_nickname() == s_recipient) 
+		{
+			recpnt = client;
+			break; 
+		}
+	}
+
+	if (!recpnt)
+	{
+		msg->send_from_server(msg->get_sender(), "PRIVMSG: recipient not found.\n");
+		return -1;
+	}
+		// With stringstream we only get the first word, 
+	// but we need the entire portion of the command following a ':'
+	if (msg->get_raw_content().find(":") == std::string::npos)
+	{
+		msg->send_from_server(msg->get_sender(), "PRIVMSG: message not found.\n");
+		return -1;
+	}
+	else
+	{
+		payload = msg->get_raw_content().substr(msg->get_raw_content().find(":") + 1, msg->get_raw_content().size());
+		std::cout << "PRIVMSG: Recipient is: "<< s_recipient << " with _recpnt " << recpnt << std::endl;
+		std::cout << "PRIVMSG: Payload is: " << payload << std::endl;
+	}
+
+	if (!msg->get_sender()->is_authd())
+	{
+		send(msg->get_sender()->get_client_fd(), "Client not authorized! Try connecting with: PASS password\r\n", 59, 0);
+		return (0);
+	}
+
+	if (send(recpnt->get_client_fd(), (msg->get_sender())->get_nickname().c_str(), msg->get_sender()->get_nickname().size(), 0) == -1 
+			|| send(recpnt->get_client_fd(), " client sent: '", 15, 0) == -1
+			|| send(recpnt->get_client_fd(), (payload + std::string("'\r\n")).c_str(), payload.size() + 3, 0) == -1)
+	{
+		std::cout << "Error sending with send()." << std::endl;
+		throw "Error sending.";
+		return(-1);
+	}
+	return 0;
+}
 	std::map<std::string, Channel>* channelMap = server->get_channels();
     std::map<std::string, Channel>::iterator it = channelMap->begin();
 
