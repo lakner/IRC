@@ -119,11 +119,11 @@ int Commands::exec_user(Message *msg)
 {
 	if (msg->get_sender()->get_nickname().empty())
 		return -1;
-	// if (!msg->get_sender()->get_username().empty())
-	// {
-	// 	msg->send_to(msg->get_sender(), std::string(HOSTNAME) + std::string(ERR_ALREADYREGISTRED) + " " + msg->get_sender()->get_nickname() + " :You may not reregister");
-	// 	return (atoi(ERR_ALREADYREGISTRED));
-	// }
+	if (!msg->get_sender()->get_username().empty())
+	{
+		msg->send_to(msg->get_sender(), std::string(HOSTNAME) + std::string(ERR_ALREADYREGISTRED) + " " + msg->get_sender()->get_nickname() + " :You may not reregister");
+		return (atoi(ERR_ALREADYREGISTRED));
+	}
 	std::stringstream ss (msg->get_payload());
 	std::string username, unused, realname;
 	Client *client = msg->get_sender();
