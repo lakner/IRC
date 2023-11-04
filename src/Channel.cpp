@@ -4,6 +4,8 @@
 #include "Numeric.hpp"
 
 //Channel::Channel(std::string channel_name) : _channel_name(channel_name){}
+std::map<std::string, Client*>	Channel::_client_list;
+std::map<std::string, Client*>	Channel::_operator_list;
 
 Channel::Channel(): _channel_name(""), _password("")
 {
@@ -40,8 +42,30 @@ int		Channel::add_user(Client *client, std::string password)
 {
 	if (password == this->_password)
 	{
+		//_client_list.insert(std::pair<std::string, Client*>(client->get_nickname(), client));
 		_client_list[client->get_nickname()] = client;
 		notify_user_joined(client);
+		send_topic(client);
+		send_user_list(client);
+		return 0;
+	}
+	return -1;
+}
+
+//removes a client form the client list of the channel
+int		Channel::remove_user(Client *client, std::string password)
+{
+	if (password == this->_password)
+	{
+		std::string keyToRemove = client->get_nickname();
+		std::map<std::string, Client*>::iterator it = _client_list.find(keyToRemove);
+
+		if (it != _client_list.end()) {
+			_client_list.erase(it);
+		} else {
+			return (-1);
+		}
+		notify_user_exit(client);
 		send_topic(client);
 		send_user_list(client);
 		return 0;
@@ -60,12 +84,41 @@ int		Channel::add_operator(Client *client, std::string password)
 	return -1;
 }
 
+//removes a client form the operator list of the channel
+int		Channel::remove_operator(Client *client, std::string password)
+{
+	if (password == this->_password)
+	{
+		std::string keyToRemove = client->get_nickname();
+		std::map<std::string, Client*>::iterator it = _operator_list.find(keyToRemove);
+
+		if (it != _operator_list.end())
+		{
+			_operator_list.erase(it);
+			return 0;
+		} else {
+			return (-1);
+		}
+	}
+	return -1;
+}
+
 void	Channel::notify_user_joined(Client *client)
 {
 	std::map<std::string, Client*>::iterator it;
 	Message msg;
 	std::string content = ":" + client->get_full_client_identifier();
 	content += " JOIN " + _channel_name;
+	for (it = _client_list.begin();	it != _client_list.end(); it++)
+		msg.send_to(it->second, content);
+}
+
+void	Channel::notify_user_exit(Client *client)
+{
+	std::map<std::string, Client*>::iterator it;
+	Message msg;
+	std::string content = ":" + client->get_full_client_identifier();
+	content += " EXIT " + _channel_name;
 	for (it = _client_list.begin();	it != _client_list.end(); it++)
 		msg.send_to(it->second, content);
 }

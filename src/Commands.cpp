@@ -37,8 +37,62 @@ int	Commands::execute(Server *server, Message *msg)
 		return(exec_join(server, msg));
 	else if (command == "INVITE" && msg->get_sender()->is_authd())
 		return(exec_invite(server, msg));
+	else if (command == "KICK" && msg->get_sender()->is_authd())
+		return(exec_kick(server, msg));
 	else 
 		return(server->send_to_all_clients(msg)); // maybe first send into the clients writebuffer
+}
+
+int	Commands::exec_kick(Server *server, Message *msg)
+{
+	std::stringstream ss (msg->get_payload());
+	std::string channel_name, nickname;
+	Client *client = msg->get_sender();
+
+	ss >> nickname >> channel_name;
+	if (nickname.empty() || channel_name.empty())
+	{
+		msg->send_to(msg->get_sender(), std::string(HOSTNAME) + std::string(ERR_NEEDMOREPARAMS));
+		return (461);
+	}
+
+	int status = client_belong_to_channel(server, channel_name, client->get_nickname());
+	if (status == 0)
+	{
+		msg->send_to(msg->get_sender(), std::string(HOSTNAME) + std::string(ERR_NOTONCHANNEL));
+		return (442);
+	}
+	else if (status == -1)
+	{
+		msg->send_to(msg->get_sender(), std::string(HOSTNAME) + std::string(ERR_NOSUCHCHANNEL));
+		return (403);
+	}
+	else if (status == -2)
+	{
+		msg->send_to(msg->get_sender(), std::string(HOSTNAME) + std::string(ERR_NOSUCHNICK));
+		return (401);
+	}
+
+	if (!allow_to_invite(server, channel_name, client->get_nickname()))
+	{
+		msg->send_to(msg->get_sender(), std::string(HOSTNAME) + std::string(ERR_CHANOPRIVSNEEDED));
+		return (482);
+	}
+
+	status = client_belong_to_channel(server, channel_name, nickname);
+	if (status == -2)
+	{
+		msg->send_to(msg->get_sender(), std::string(HOSTNAME) + std::string(ERR_NOSUCHNICK));
+		return (401);
+	}
+	else if (status == 0)
+	{
+		msg->send_to(msg->get_sender(), std::string(HOSTNAME) + std::string(ERR_USERNOTINCHANNEL));
+		return (441);
+	}
+
+	kick(server, channel_name, nickname);
+	return (0);
 }
 
 int	Commands::exec_invite(Server *server, Message *msg)
@@ -308,16 +362,13 @@ int	client_belong_to_channel(
 	{
 		if (!nickname_exists(nickname, server))
 			return (-2);
-		std::map<std::string, Client*>& clientMap = cl.get_users();
-		std::map<std::string, Client*>::iterator it = clientMap.begin();
+		std::map<std::string, Client*>::iterator it;
 
-		for (; it != clientMap.end(); it++) {
-			Client *cl = it->second;
-
-			if (cl->get_nickname() == nickname)
+		for (it = cl.get_users().begin(); it != cl.get_users().end(); it++) {
+			Client client = *it->second;
+			if (client.get_nickname() == nickname)
 				return 1; // Nickname found
 		}
-		//std::cout << "CHANNEL NAME: " << cl.get_channel_name() << " NICKNAME: " << nickname << std::endl;
 		return (0);
 	}
 	return (-1); //channel doesn't exist
@@ -336,9 +387,9 @@ int	allow_to_invite(
 		std::map<std::string, Client*>::iterator it = operatorMap.begin();
 
 		for (; it != operatorMap.end(); it++) {
-			Client *cl = it->second;
+			Client *client = it->second;
 
-			if (cl->get_nickname() == nickname)
+			if (client->get_nickname() == nickname)
 				return (1); // Nickname found
 		}
 		return (0);
@@ -346,7 +397,26 @@ int	allow_to_invite(
 	return (-1); //channel doesn't exist
 }
 
+//invite a user to a channel
 void	invite(Server *server, std::string channel_name, std::string nickname)
+{
+	Channel	ch;
+	if (channel_exists(channel_name, server, ch))
+	{
+		static std::map<const int, Client>& clientMap = server->get_clients();
+		std::map<const int, Client>::iterator it = clientMap.begin();
+
+		for (; it != clientMap.end(); it++) {
+			Client *cl = &it->second;
+
+			if (cl->get_nickname() == nickname)
+				ch.add_user(cl, ch.get_password());
+		}
+	}
+}
+
+//kick a user from a channel
+void	kick(Server *server, std::string channel_name, std::string nickname)
 {
 	Channel	ch;
 	if (channel_exists(channel_name, server, ch))
@@ -358,7 +428,10 @@ void	invite(Server *server, std::string channel_name, std::string nickname)
 			Client cl = it->second;
 
 			if (cl.get_nickname() == nickname)
-				ch.add_user(&cl, ch.get_password());
+			{
+				ch.remove_user(&cl, ch.get_password());
+				ch.remove_operator(&cl, ch.get_password());
+			}
 		}
 	}
 }

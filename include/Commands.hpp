@@ -28,11 +28,13 @@ class Commands
 		static int	exec_join(Server *server, Message *msg);
 		static int	exec_cap(Message *msg);
 		static int	exec_invite(Server *server, Message *msg);
+		static int	exec_kick(Server *server, Message *msg);
 };
 
-int	nickname_exists(std::string name, Server *serv);
-int	channel_exists(std::string channel_name, Server *server, Channel& myChannel);
-int	client_belong_to_channel(Server *server, std::string channel_name, std::string nickname);
-int	allow_to_invite(Server *server, std::string channel_name, std::string nickname);
+int		nickname_exists(std::string name, Server *serv);
+int		channel_exists(std::string channel_name, Server *server, Channel& myChannel);
+int		client_belong_to_channel(Server *server, std::string channel_name, std::string nickname);
+int		allow_to_invite(Server *server, std::string channel_name, std::string nickname);
 void	invite(Server *server, std::string channel_name, std::string nickname);
+void	kick(Server *server, std::string channel_name, std::string nickname);
 #endif

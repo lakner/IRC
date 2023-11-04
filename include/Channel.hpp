@@ -23,10 +23,12 @@ class	Channel
 		Channel(std::string channel_name, std::string password);
 		~Channel();
 		int add_user(Client *client, std::string password);
+		int remove_user(Client *client, std::string password);
 		int add_operator(Client *client, std::string password);
+		int remove_operator(Client *client, std::string password);
 		std::string	get_channel_name( void );
-		std::map<std::string, Client*>&		get_users();
-		std::map<std::string, Client*>&		get_operators();
+		static std::map<std::string, Client*>&		get_users();
+		static std::map<std::string, Client*>&		get_operators();
 		Mode								get_mode();
 		std::string							get_password();
 		
@@ -34,10 +36,11 @@ class	Channel
 		std::string						_channel_name;
 		std::string						_password;
 		std::string						_topic;
-		std::map<std::string, Client*>	_client_list;
-		std::map<std::string, Client*>	_operator_list;
+		static std::map<std::string, Client*>	_client_list;
+		static std::map<std::string, Client*>	_operator_list;
 		Mode							_mode;
 		void							notify_user_joined(Client *client);
+		void							notify_user_exit(Client *client);
 		void							notify_user_is_operator(Client *client);
 		void							notify_mode_changed(Client *client);
 		void							send_topic(Client *client);
