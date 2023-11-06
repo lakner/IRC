@@ -29,8 +29,8 @@ class	Channel
 		int add_operator(Client *client, std::string password);
 		int remove_operator(Client *client, std::string password);
 		std::string	get_channel_name( void );
-		static std::map<std::string, Client*>&		get_users();
-		static std::map<std::string, Client*>&		get_operators();
+		std::map<std::string, Client*>&		get_users();
+		std::map<std::string, Client*>&		get_operators();
 		Mode								get_mode();
 		std::string							get_password();
 		

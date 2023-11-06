@@ -3,10 +3,6 @@
 #include "Message.hpp"
 #include "Numeric.hpp"
 
-//Channel::Channel(std::string channel_name) : _channel_name(channel_name){}
-std::map<std::string, Client*>	Channel::_client_list;
-std::map<std::string, Client*>	Channel::_operator_list;
-
 Channel::Channel(): _channel_name(""), _password("")
 {
 	Mode	initial_mode;
