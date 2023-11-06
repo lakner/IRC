@@ -161,6 +161,8 @@ void	Channel::send_user_list(Client *client)
 	msg.send_to(client, msg_content);
 	msg_content = std::string(RPL_ENDOFNAMES);
 	msg.send_to(client, msg_content);
+}
+
 int Channel::send_to_all_in_channel(Message *msg)
 {
 	std::map<std::string, Client*>::iterator it;

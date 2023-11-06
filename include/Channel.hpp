@@ -38,8 +38,10 @@ class	Channel
 		std::string						_channel_name;
 		std::string						_password;
 		std::string						_topic;
+		Mode								_mode;
 		//Server*							_server;
 		std::map<std::string, Client*>	_client_list;
+		std::map<std::string, Client*>	_operator_list;
 		void							notify_user_joined(Client *client);
 		void							notify_user_exit(Client *client);
 		void							notify_user_is_operator(Client *client);
