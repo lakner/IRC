@@ -106,7 +106,7 @@ void	Channel::notify_user_joined(Client *client)
 	std::string content = ":" + client->get_full_client_identifier();
 	content += " JOIN " + _channel_name;
 	for (it = _client_list.begin();	it != _client_list.end(); it++)
-		msg.send_to(it->second, content);
+		msg.send_from_server(it->second, content);
 }
 
 void	Channel::notify_user_exit(Client *client)
@@ -145,7 +145,7 @@ void	Channel::send_topic(Client *client)
 	std::string msg_content = std::string(RPL_TOPIC);
 	msg_content += " " + client->get_nickname();
 	msg_content += " " + _channel_name + " :" + _topic;
-	msg.send_to(client, msg_content);
+	msg.send_from_server(client, msg_content);
 }	
 
 void	Channel::send_user_list(Client *client)
@@ -158,9 +158,9 @@ void	Channel::send_user_list(Client *client)
 	std::map<std::string, Client*>::iterator it;
 	for (it = _client_list.begin(); it != _client_list.end(); it++)
 		msg_content += it->first + " ";
-	msg.send_to(client, msg_content);
+	msg.send_from_server(client, msg_content);
 	msg_content = std::string(RPL_ENDOFNAMES);
-	msg.send_to(client, msg_content);
+	msg.send_from_server(client, msg_content);
 }
 
 int Channel::send_to_all_in_channel(Message *msg)

@@ -313,10 +313,10 @@ int Commands::exec_join(Server *server, Message *msg)
 			ret = (*channels)[vchannels[i]].add_user(msg->get_sender(), "");
 		
 		if (ret != 0)
-			msg->send_to(msg->get_sender(), "JOIN: Error joining channel, wrong password?");
+			msg->send_from_server(msg->get_sender(), "JOIN: Error joining channel, wrong password?");
 		else
 		{
-			msg->send_to(msg->get_sender(), "JOIN: Successfully joined channel " + vchannels[i] + "\n");
+			msg->send_from_server(msg->get_sender(), "JOIN: Successfully joined channel " + vchannels[i] + "\n");
 			std::cout << msg->get_sender() << " joined channel " << vchannels[i] << std::endl;
 		}
 	}
