@@ -106,7 +106,7 @@ void	Channel::notify_user_joined(Client *client)
 	std::string content = ":" + client->get_full_client_identifier();
 	content += " JOIN " + _channel_name;
 	for (it = _client_list.begin();	it != _client_list.end(); it++)
-		msg.send_from_server(it->second, content);
+		msg.send_to(it->second, content);
 }
 
 void	Channel::notify_user_exit(Client *client)

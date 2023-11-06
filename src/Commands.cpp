@@ -399,19 +399,19 @@ int	Commands::exec_privmsg(Server *server, Message *msg)
 int channel_exists(std::string channel_name, Server *server, Channel& myChannel) 
 {
 	std::map<std::string, Channel>* channelMap = server->get_channels();
-    std::map<std::string, Channel>::iterator it = channelMap->begin();
+	std::map<std::string, Channel>::iterator it = channelMap->begin();
 
-    for (; it != channelMap->end(); it++) {
-        Channel cl = it->second;
+	for (; it != channelMap->end(); it++) {
+		Channel cl = it->second;
 
-        if (cl.get_channel_name() == channel_name)
+		if (cl.get_channel_name() == channel_name)
 		{
 			myChannel = it->second;
-            return 1; // Nickname found
+			return 1; // Nickname found
 		}
-    }
+	}
 
-    return 0; // Nickname not found
+	return 0; // Nickname not found
 }
 
 int	client_belong_to_channel(
