@@ -481,7 +481,7 @@ void	kick(Server *server, std::string channel_name, std::string nickname)
 	Channel	ch;
 	if (channel_exists(channel_name, server, ch))
 	{
-		static std::map<const int, Client>& clientMap = server->get_clients();
+		std::map<const int, Client>& clientMap = server->get_clients();
 		std::map<const int, Client>::iterator it = clientMap.begin();
 
 		for (; it != clientMap.end(); it++) {
