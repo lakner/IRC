@@ -27,6 +27,7 @@ class Message
 		int			sendmsg();
 		int			send_to(Client *new_recpnt);
 		int			send_to(Client *new_recpnt, std::string content);
+		int			send_from_server(Client *new_recpnt, std::string content);
 		// std::string	get_raw_content();
 
 	private:

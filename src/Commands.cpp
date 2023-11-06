@@ -345,7 +345,6 @@ int	Commands::exec_privmsg(Server *server, Message *msg)
 	std::string payload;
 	ss >> s_recipient >> s_recipient; // Read the second word (skipping leading whitespace)
 	Client *recpnt = NULL;
-int channel_exists(std::string channel_name, Server *server, Channel& myChannel) {
 
 	(void) server;
 
@@ -396,6 +395,9 @@ int channel_exists(std::string channel_name, Server *server, Channel& myChannel)
 	}
 	return 0;
 }
+
+int channel_exists(std::string channel_name, Server *server, Channel& myChannel) 
+{
 	std::map<std::string, Channel>* channelMap = server->get_channels();
     std::map<std::string, Channel>::iterator it = channelMap->begin();
 
