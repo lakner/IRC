@@ -195,3 +195,13 @@ std::string	Channel::get_password( void )
 {
 	return (_password);
 }
+
+std::string	Channel::get_topic( void )
+{
+	return (_topic);
+}
+
+void	Channel::set_topic( std::string new_topic )
+{
+	this->_topic = new_topic;
+}

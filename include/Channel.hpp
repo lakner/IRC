@@ -33,6 +33,8 @@ class	Channel
 		std::map<std::string, Client*>&		get_operators();
 		Mode								get_mode();
 		std::string							get_password();
+		std::string							get_topic();
+		void								set_topic( std::string new_topic );
 		
 	private:
 		std::string						_channel_name;

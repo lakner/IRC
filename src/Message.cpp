@@ -67,6 +67,8 @@ int	Message::parse()
 		_command = "PRIVMSG";
 	else if (_raw_content.rfind("JOIN", 0) == 0)
 		_command = "JOIN";
+	else if (_raw_content.rfind("TOPIC", 0) == 0)
+		_command = "TOPIC";
 	else
 	{
 		std::stringstream ss(_raw_content);
