@@ -1,11 +1,5 @@
 #include "Server.hpp"
 
-// Server::Server() : _port("6667"), _password("password")
-// {
-// }
-
-std::map<const int, Client> Server::_clients;
-
 Server::~Server()
 {
 }
@@ -125,6 +119,18 @@ Client&		Server::get_client(int client_fd)
 	return (it->second);
 }
 
+Client&		Server::get_client(std::string client_name)
+{
+	std::map<const int, Client>::iterator it = _clients.begin();
+
+	for (; it != _clients.end(); it++)
+	{
+		if ((it->second).get_nickname() == client_name)
+			return (it->second);
+	}
+	return (it->second);
+}
+
 std::map<const int, Client>&	Server::get_clients()
 {
 	return (_clients);
@@ -199,11 +205,6 @@ int	Server::read_from_existing_client(int client_fd)
 	return(nbytes);
 }
 
-// int	Server::send_private(Message *msg)
-// {
-
-// 	return (0);
-// }
 
 int	Server::send_to_all_clients(Message *msg)
 {
@@ -232,9 +233,9 @@ int	Server::send_to_all_clients(Message *msg)
 	return(0);
 }
 
-std::map<std::string, Channel>*	Server::get_channels()
+std::map<std::string, Channel>&	Server::get_channels()
 {
-	return(&_channels);
+	return(_channels);
 }
 
 void Server::add_channel(std::string name, std::string pass)
@@ -259,4 +260,48 @@ std::string	Server::read_client_ipv4_address(struct sockaddr& client_addr)
 	inet_ntop(AF_INET, &ip_addr, ip_str, INET_ADDRSTRLEN);
 	std::cout << "New client IP address: " << ip_str << std::endl;
 	return(std::string(ip_str));
+}
+
+int Server::channel_exists(std::string channel_name, Channel& myChannel)
+{
+	std::map<std::string, Channel>::iterator it = _channels.begin();
+
+	for (; it != _channels.end(); it++) {
+		Channel &cl = it->second;
+
+		if (cl.get_channel_name() == channel_name)
+		{
+			myChannel = cl;
+			return 1; // Nickname found
+		}
+	}
+
+	return 0; // Nickname not found
+}
+
+int	Server::channel_exists(std::string channel_name)
+{
+	std::map<std::string, Channel>::iterator it = _channels.begin();
+
+	for (; it != _channels.end(); it++) {
+		Channel &cl = it->second;
+
+		if (cl.get_channel_name() == channel_name)
+			return 1; // Nickname found
+	}
+	return 0; // Nickname not found
+}
+
+Channel&	Server::get_channel(std::string name)
+{
+	std::map<std::string, Channel>::iterator it = _channels.begin();
+
+	for (; it != _channels.end(); it++)
+	{
+		Channel &ch = it->second;
+		if (it->second.get_channel_name() == name)
+			return(ch);
+		
+	}
+	return it->second;
 }
