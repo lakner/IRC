@@ -36,13 +36,14 @@ class	Channel
 		std::string						get_password();
 		std::string						get_topic();
 		void							set_topic( std::string new_topic );
+		bool							allowed_to_set_topic(std::string nickname);
 		
 	private:
 		std::string						_channel_name;
 		std::string						_password;
 		std::string						_topic;
-		Mode								_mode;
-		//Server*							_server;
+		Mode							_mode;
+		//Server*						_server;
 		std::map<std::string, Client*>	_client_list;
 		std::map<std::string, Client*>	_operator_list;
 		void							notify_user_joined(Client *client);

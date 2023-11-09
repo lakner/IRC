@@ -175,7 +175,7 @@ int Channel::send_to_all_in_channel(std::string content)
 	return 0;
 }
 
-bool Channel::client_in_channel(Client& client)
+bool	Channel::client_in_channel(Client& client)
 {
 	std::map<std::string, Client*>::iterator it = _client_list.begin();
 
@@ -185,6 +185,17 @@ bool Channel::client_in_channel(Client& client)
 			return true;
 	}
 	return false;
+}
+
+bool	Channel::allowed_to_set_topic(std::string nickname)
+{
+	if (!_mode.t)
+		return (true);
+
+	if (_operator_list.find(nickname) != _operator_list.end())
+		return (true);
+
+	return (false);
 }
 
 std::string	Channel::get_channel_name( void )
