@@ -379,7 +379,7 @@ int Commands::exec_join(Server *server, Message *msg)
 	return (0);
 }
 
-int nickname_exists(std::string name, Server *serv) {
+int Commands::nickname_exists(std::string name, Server *serv) {
 
 	static std::map<const int, Client>& clientMap = serv->get_clients();
 	std::map<const int, Client>::iterator it = clientMap.begin();
@@ -452,7 +452,7 @@ int	Commands::exec_privmsg(Server *server, Message *msg)
 	return 0;
 }
 
-int channel_exists(std::string channel_name, Server *server, Channel*& myChannel) 
+int Commands::channel_exists(std::string channel_name, Server *server, Channel*& myChannel) 
 {
 	std::map<std::string, Channel>* channelMap = server->get_channels();
 	std::map<std::string, Channel>::iterator it = channelMap->begin();
@@ -470,7 +470,7 @@ int channel_exists(std::string channel_name, Server *server, Channel*& myChannel
 	return 0; // Nickname not found
 }
 
-int	client_belong_to_channel(
+int	Commands::client_belong_to_channel(
 		Server *server, std::string channel_name, std::string nickname)
 {
 	Channel*	cl = nullptr;
@@ -490,7 +490,7 @@ int	client_belong_to_channel(
 	return (-1); //channel doesn't exist
 }
 
-int	allow_to_invite(
+int	Commands::allow_to_invite(
 		Server *server, std::string channel_name, std::string nickname)
 {
 	Channel*	cl = nullptr;
@@ -513,7 +513,7 @@ int	allow_to_invite(
 	return (-1); //channel doesn't exist
 }
 
-int	allow_to_set_topic( //change
+int	Commands::allow_to_set_topic( //change
 		Server *server, std::string channel_name, std::string nickname)
 {
 	Channel*	cl = nullptr;
@@ -537,7 +537,7 @@ int	allow_to_set_topic( //change
 }
 
 //invite a user to a channel
-void	invite(Server *server, std::string channel_name, std::string nickname)
+void	Commands::invite(Server *server, std::string channel_name, std::string nickname)
 {
 	Channel*	ch = nullptr;
 	if (channel_exists(channel_name, server, ch))
@@ -555,7 +555,7 @@ void	invite(Server *server, std::string channel_name, std::string nickname)
 }
 
 //kick a user from a channel
-void	kick(Server *server, std::string channel_name, std::string nickname)
+void	Commands::kick(Server *server, std::string channel_name, std::string nickname)
 {
 	Channel*	ch;
 	if (channel_exists(channel_name, server, ch))
@@ -575,7 +575,7 @@ void	kick(Server *server, std::string channel_name, std::string nickname)
 	}
 }
 
-std::string	get_channel_topic(Server *server, std::string channel_name)
+std::string	Commands::get_channel_topic(Server *server, std::string channel_name)
 {
 	Channel*	ch;
 	if (channel_exists(channel_name, server, ch))
@@ -586,7 +586,7 @@ std::string	get_channel_topic(Server *server, std::string channel_name)
 	return ("");
 }
 
-void	change_topic(Server *server, std::string channel_name, std::string topic_name)
+void	Commands::change_topic(Server *server, std::string channel_name, std::string topic_name)
 {
 	Channel*	ch = nullptr;
 	if (channel_exists(channel_name, server, ch))
@@ -596,7 +596,7 @@ void	change_topic(Server *server, std::string channel_name, std::string topic_na
 	}
 }
 
-void	clean_topic(Server *server, std::string channel_name)
+void	Commands::clean_topic(Server *server, std::string channel_name)
 {
 	Channel*	ch = nullptr;
 	if (channel_exists(channel_name, server, ch))
