@@ -348,13 +348,13 @@ int Commands::exec_join(Server *server, Message *msg)
 	// std::cout << std::endl;
 
 	// TODO: Actually join the channels here
-	std::map<std::string, Channel>* channels = server->get_channels();
+	std::map<std::string, Channel>& channels = server->get_channels();
 	
 	for (unsigned int i = 0; i < vchannels.size(); i++)
 	{
 		int ret;
 		// new channel
-		if (channels->find(vchannels[i]) == channels->end())
+		if (channels.find(vchannels[i]) == channels.end())
 		{
 			if (i < vpasswords.size()) // create channel with password
 				server->add_channel(vchannels[i], vpasswords[i]);
@@ -364,9 +364,9 @@ int Commands::exec_join(Server *server, Message *msg)
 
 		// join the channel
 		if (i < vpasswords.size())
-			ret = (*channels)[vchannels[i]].add_user(msg->get_sender(), vpasswords[i]);
+			ret = channels[vchannels[i]].add_user(msg->get_sender(), vpasswords[i]);
 		else
-			ret = (*channels)[vchannels[i]].add_user(msg->get_sender(), "");
+			ret = channels[vchannels[i]].add_user(msg->get_sender(), "");
 		
 		if (ret != 0)
 			msg->send_from_server(msg->get_sender(), "JOIN: Error joining channel, wrong password?");
@@ -379,18 +379,18 @@ int Commands::exec_join(Server *server, Message *msg)
 	return (0);
 }
 
-int Commands::nickname_exists(std::string name, Server *serv) {
-
-	static std::map<const int, Client>& clientMap = serv->get_clients();
+int Commands::nickname_exists(std::string name, Server *serv)
+{
+	std::map<const int, Client>& clientMap = serv->get_clients();
 	std::map<const int, Client>::iterator it = clientMap.begin();
 
-	for (; it != clientMap.end(); it++) {
+	for (; it != clientMap.end(); it++)
+	{
 		Client cl = it->second;
 
-	if (cl.get_nickname() == name)
-		return 1; // Nickname found
+		if (cl.get_nickname() == name)
+			return 1; // Nickname found
 	}
-
 	return 0; // Nickname not found
 }
 
@@ -454,10 +454,10 @@ int	Commands::exec_privmsg(Server *server, Message *msg)
 
 int Commands::channel_exists(std::string channel_name, Server *server, Channel*& myChannel) 
 {
-	std::map<std::string, Channel>* channelMap = server->get_channels();
-	std::map<std::string, Channel>::iterator it = channelMap->begin();
+	std::map<std::string, Channel>& channelMap = server->get_channels();
+	std::map<std::string, Channel>::iterator it = channelMap.begin();
 
-	for (; it != channelMap->end(); it++) {
+	for (; it != channelMap.end(); it++) {
 		Channel &cl = it->second;
 
 		if (cl.get_channel_name() == channel_name)

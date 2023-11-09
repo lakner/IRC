@@ -35,7 +35,7 @@ class Server
 		int										send_to_all_clients(Message *msg);
 		int 									send_private(Message *msg);
 		static std::map<const int, Client>&		get_clients();
-		std::map<std::string, Channel>*			get_channels();
+		std::map<std::string, Channel>&			get_channels();
 		void									add_channel(std::string name, std::string pass);
 		
 	private:
