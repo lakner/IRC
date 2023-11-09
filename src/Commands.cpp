@@ -468,12 +468,3 @@ void	Commands::kick(Server *server, std::string channel_name, std::string nickna
 	}
 }
 
-void	Commands::change_topic(Server *server, std::string channel_name, std::string topic_name)
-{
-	if (server->channel_exists(channel_name))
-	{
-		Channel &ch = server->get_channel(channel_name);
-		std::cout << "CHANGE OF TOPIC IMPLEMENT.. " << ch.get_channel_name() << std::endl;
-		ch.set_topic(topic_name);
-	}
-}
