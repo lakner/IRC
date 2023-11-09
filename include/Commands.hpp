@@ -32,8 +32,8 @@ class Commands
 		static int			exec_privmsg(Server *server, Message *msg);
 		static int			exec_topic(Server *server, Message *msg);
 		static int			nickname_exists(std::string name, Server *serv);
-		//static int			channel_exists(std::string channel_name, Server *server, Channel*& myChannel);
-		static int			client_belong_to_channel(Server *server, std::string channel_name, std::string nickname);
+		// static int			channel_exists(std::string channel_name, Server *server, Channel*& myChannel);
+		// static int			client_belong_to_channel(Server *server, std::string channel_name, std::string nickname);
 		static int			allow_to_invite(Server *server, std::string channel_name, std::string nickname);
 		static void			invite(Server *server, std::string channel_name, std::string nickname);
 		static void			kick(Server *server, std::string channel_name, std::string nickname);

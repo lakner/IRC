@@ -171,6 +171,18 @@ int Channel::send_to_all_in_channel(Message *msg)
 	return 0;
 }
 
+bool Channel::client_in_channel(Client& client)
+{
+	std::map<std::string, Client*>::iterator it = _client_list.begin();
+
+	for(; it != _client_list.end(); it++)
+	{
+		if (&client == it->second)
+			return true;
+	}
+	return false;
+}
+
 std::string	Channel::get_channel_name( void )
 {
 	return (_channel_name);

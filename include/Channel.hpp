@@ -28,6 +28,7 @@ class	Channel
 		int								remove_user(Client *client, std::string password);
 		int								add_operator(Client *client, std::string password);
 		int								remove_operator(Client *client, std::string password);
+		bool							client_in_channel(Client &client);
 		std::string						get_channel_name( void );
 		std::map<std::string, Client*>&	get_users();
 		std::map<std::string, Client*>&	get_operators();

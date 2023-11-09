@@ -305,3 +305,16 @@ Channel&	Server::get_channel(std::string name)
 	}
 	return it->second;
 }
+
+bool	Server::nickname_exists(std::string nickname)
+{
+	std::map<const int, Client>::iterator it = _clients.begin();
+	
+	for(; it != _clients.end(); it++)
+	{
+		Client& client = it->second;
+		if (client.get_nickname() == nickname)
+			return true;
+	}
+	return false;
+}

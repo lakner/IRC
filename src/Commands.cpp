@@ -51,32 +51,34 @@ int	Commands::exec_topic(Server *server, Message *msg)
 {
 	std::stringstream ss (msg->get_payload());
 	std::string channel_name, new_channel_topic;
-	Client *client = msg->get_sender();
+	Client& client = *(msg->get_sender());
 	(void)server;
 
 	ss >> channel_name >> new_channel_topic;
 	if (channel_name.empty())
 	{
-		msg->send_to(client, std::string(HOSTNAME) + std::string(ERR_NEEDMOREPARAMS));
+		msg->send_to(&client, std::string(HOSTNAME) + std::string(ERR_NEEDMOREPARAMS));
 		return (461);
 	}
-
-	int	status = client_belong_to_channel(server, channel_name, client->get_nickname());
-	int	allow_change_topic = allow_to_set_topic(server, channel_name, client->get_nickname());
-
-	if (status == 0)
-	{
-		msg->send_to(msg->get_sender(), std::string(HOSTNAME) + std::string(ERR_NOTONCHANNEL));
-		return (442);
-	}
-	else if (status == -1)
+	
+	if(!server->channel_exists(channel_name))
 	{
 		msg->send_to(msg->get_sender(), std::string(HOSTNAME) + std::string(ERR_NOSUCHCHANNEL));
 		return (403);
 	}
 
+	Channel& ch = server->get_channel(channel_name);
+
+	int	allow_change_topic = allow_to_set_topic(server, channel_name, client.get_nickname());
+
+	if (!ch.client_in_channel(client))
+	{
+		msg->send_to(msg->get_sender(), std::string(HOSTNAME) + std::string(ERR_NOTONCHANNEL));
+		return (442);
+	}
+
 	if (new_channel_topic.empty())
-		msg->send_to(client, std::string(HOSTNAME) + get_channel_topic(server, channel_name)); //not sure yet what to return
+		msg->send_to(&client, std::string(HOSTNAME) + get_channel_topic(server, channel_name)); //not sure yet what to return
 	else
 	{
 		if (!allow_change_topic)
@@ -105,7 +107,7 @@ int	Commands::exec_kick(Server *server, Message *msg)
 {
 	std::stringstream ss (msg->get_payload());
 	std::string channel_name, nickname;
-	Client *client = msg->get_sender();
+	Client& client = *(msg->get_sender());
 
 	ss >> nickname >> channel_name;
 	if (nickname.empty() || channel_name.empty())
@@ -113,41 +115,34 @@ int	Commands::exec_kick(Server *server, Message *msg)
 		msg->send_to(msg->get_sender(), std::string(HOSTNAME) + std::string(ERR_NEEDMOREPARAMS));
 		return (461);
 	}
-
-	int status = client_belong_to_channel(server, channel_name, client->get_nickname());
-	if (status == 0)
-	{
-		msg->send_to(msg->get_sender(), std::string(HOSTNAME) + std::string(ERR_NOTONCHANNEL));
-		return (442);
-	}
-	else if (status == -1)
+	
+	if(!server->channel_exists(channel_name))
 	{
 		msg->send_to(msg->get_sender(), std::string(HOSTNAME) + std::string(ERR_NOSUCHCHANNEL));
 		return (403);
 	}
-	else if (status == -2)
+
+	Channel &ch = server->get_channel(channel_name);
+	if (!ch.client_in_channel(client))
+	{
+		msg->send_to(msg->get_sender(), std::string(HOSTNAME) + std::string(ERR_NOTONCHANNEL));
+		return (442);
+	}
+
+	if (!ch.client_in_channel(client))
 	{
 		msg->send_to(msg->get_sender(), std::string(HOSTNAME) + std::string(ERR_NOSUCHNICK));
 		return (401);
 	}
 
-	if (!allow_to_invite(server, channel_name, client->get_nickname()))
+	if (!allow_to_invite(server, channel_name, client.get_nickname()))
 	{
 		msg->send_to(msg->get_sender(), std::string(HOSTNAME) + std::string(ERR_CHANOPRIVSNEEDED));
 		return (482);
 	}
 
-	status = client_belong_to_channel(server, channel_name, nickname);
-	if (status == -2)
-	{
-		msg->send_to(msg->get_sender(), std::string(HOSTNAME) + std::string(ERR_NOSUCHNICK));
-		return (401);
-	}
-	else if (status == 0)
-	{
-		msg->send_to(msg->get_sender(), std::string(HOSTNAME) + std::string(ERR_USERNOTINCHANNEL));
-		return (441);
-	}
+	msg->send_to(msg->get_sender(), std::string(HOSTNAME) + std::string(ERR_USERNOTINCHANNEL));
+	return (441);
 
 	kick(server, channel_name, nickname);
 	return (0);
@@ -157,7 +152,7 @@ int	Commands::exec_invite(Server *server, Message *msg)
 {
 	std::stringstream ss (msg->get_payload());
 	std::string channel_name, nickname;
-	Client *client = msg->get_sender();
+	Client& client = *(msg->get_sender());
 
 	ss >> nickname >> channel_name;
 	if (nickname.empty() || channel_name.empty())
@@ -166,36 +161,34 @@ int	Commands::exec_invite(Server *server, Message *msg)
 		return (461);
 	}
 
-	int status = client_belong_to_channel(server, channel_name, client->get_nickname());
-	if (status == 0)
-	{
-		msg->send_to(msg->get_sender(), std::string(HOSTNAME) + std::string(ERR_NOTONCHANNEL));
-		return (442);
-	}
-	else if (status == -1)
+	if(!server->channel_exists(channel_name))
 	{
 		msg->send_to(msg->get_sender(), std::string(HOSTNAME) + std::string(ERR_NOSUCHCHANNEL));
 		return (403);
 	}
-	else if (status == -2)
+
+	Channel &ch = server->get_channel(channel_name);
+	if (!ch.client_in_channel(client))
 	{
-		msg->send_to(msg->get_sender(), std::string(HOSTNAME) + std::string(ERR_NOSUCHNICK));
-		return (401);
+		msg->send_to(msg->get_sender(), std::string(HOSTNAME) + std::string(ERR_NOTONCHANNEL));
+		return (442);
 	}
 
-	if (!allow_to_invite(server, channel_name, client->get_nickname()))
+	if (!allow_to_invite(server, channel_name, client.get_nickname()))
 	{
 		msg->send_to(msg->get_sender(), std::string(HOSTNAME) + std::string(ERR_CHANOPRIVSNEEDED));
 		return (482);
 	}
 
-	status = client_belong_to_channel(server, channel_name, nickname);
-	if (status == -2)
+	if (!server->nickname_exists(nickname))
 	{
 		msg->send_to(msg->get_sender(), std::string(HOSTNAME) + std::string(ERR_NOSUCHNICK));
 		return (401);
 	}
-	else if (status == 1)
+	
+	Client& invited = server->get_client(nickname);
+
+	if (ch.client_in_channel(invited))
 	{
 		msg->send_to(msg->get_sender(), std::string(HOSTNAME) + std::string(ERR_USERONCHANNEL));
 		return (443);
@@ -394,6 +387,21 @@ int Commands::nickname_exists(std::string name, Server *serv)
 	return 0; // Nickname not found
 }
 
+// Client& Commands::find_client(std::string name, Server *serv)
+// {
+// 	std::map<const int, Client>& clientMap = serv->get_clients();
+// 	std::map<const int, Client>::iterator it = clientMap.begin();
+
+// 	for (; it != clientMap.end(); it++)
+// 	{
+// 		Client cl = it->second;
+
+// 		if (cl.get_nickname() == name)
+// 			return it->second; // Nickname found
+// 	}
+// 	return 0; // Nickname not found
+// }
+
 int	Commands::exec_privmsg(Server *server, Message *msg)
 {
 	std::string	s_recipient;
@@ -405,16 +413,16 @@ int	Commands::exec_privmsg(Server *server, Message *msg)
 	(void) server;
 
 	std::map<const int, Client>::iterator it;
-	for (it = Server::get_clients().begin(); it != Server::get_clients().end(); it++)
-	{
-		// Check for ":" in the recipient here and throw an error?
-		Client* client = &(it->second);
-		if (client->get_nickname() == s_recipient) 
-		{
-			recpnt = client;
-			break; 
-		}
-	}
+	// for (it = Server::get_clients().begin(); it != Server::get_clients().end(); it++)
+	// {
+	// 	// Check for ":" in the recipient here and throw an error?
+	// 	Client* client = &(it->second);
+	// 	if (client->get_nickname() == s_recipient) 
+	// 	{
+	// 		recpnt = client;
+	// 		break; 
+	// 	}
+	// }
 
 	if (!recpnt)
 	{
@@ -452,25 +460,25 @@ int	Commands::exec_privmsg(Server *server, Message *msg)
 	return 0;
 }
 
-int	Commands::client_belong_to_channel(
-		Server *server, std::string channel_name, std::string nickname)
-{
-	if (server->channel_exists(channel_name))
-	{
-		Channel &ch = server->get_channel(channel_name);
-		if (!nickname_exists(nickname, server))
-			return (-2);
-		std::map<std::string, Client*>::iterator it;
+// int	Commands::client_belong_to_channel(
+// 		Server *server, std::string channel_name, std::string nickname)
+// {
+// 	if (server->channel_exists(channel_name))
+// 	{
+// 		Channel &ch = server->get_channel(channel_name);
+// 		if (!nickname_exists(nickname, server))
+// 			return (-2);
+// 		std::map<std::string, Client*>::iterator it;
 
-		for (it = ch.get_users().begin(); it != ch.get_users().end(); it++) {
-			Client client = *it->second;
-			if (client.get_nickname() == nickname)
-				return 1; // Nickname found
-		}
-		return (0);
-	}
-	return (-1); //channel doesn't exist
-}
+// 		for (it = ch.get_users().begin(); it != ch.get_users().end(); it++) {
+// 			Client client = *it->second;
+// 			if (client.get_nickname() == nickname)
+// 				return 1; // Nickname found
+// 		}
+// 		return (0);
+// 	}
+// 	return (-1); //channel doesn't exist
+// }
 
 int	Commands::allow_to_invite(
 		Server *server, std::string channel_name, std::string nickname)
