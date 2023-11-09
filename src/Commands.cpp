@@ -47,12 +47,12 @@ int	Commands::execute(Server *server, Message *msg)
 
 int	Commands::exec_topic(Server *server, Message *msg)
 {
-	std::string payload = msg->get_payload();
-	std::stringstream ss (payload);
-	std::string channel_name;
-	std::string new_channel_topic = "";
-	Client& client = *(msg->get_sender());
-	std::string response = "";
+	std::string			payload = msg->get_payload();
+	std::stringstream	ss (payload);
+	std::string			channel_name;
+	std::string			new_channel_topic = "";
+	Client&				client = *(msg->get_sender());
+	std::string 		response = "";
 
 	ss >> channel_name;
 	
@@ -65,28 +65,21 @@ int	Commands::exec_topic(Server *server, Message *msg)
 	if (channel_name.empty())
 	{
 		response += std::string(HOSTNAME) + " " + ERR_NEEDMOREPARAMS;
-		msg->send_to(msg->get_sender(), response);
-		return (461);
+		return (msg->send_to(msg->get_sender(), response));
 	}
-
 	// channel needs to exist
-	if(!server->channel_exists(channel_name))
+	else if(!server->channel_exists(channel_name))
 	{
 		response += std::string(HOSTNAME) + " " + ERR_NOSUCHCHANNEL;
-		msg->send_to(msg->get_sender(), response);
-		return (403);
+		return (msg->send_to(msg->get_sender(), response));
 	}
 
 	Channel& ch = server->get_channel(channel_name);
-	// client needs to be in channel
-	if (!ch.client_in_channel(client))
-	{
-		response += std::string(HOSTNAME) + " " + std::string(ERR_NOTONCHANNEL)  + " " + ch.get_channel_name() + " :You're not on that channel";
-		msg->send_to(msg->get_sender(), response);
-		return (442);
-	}
-
-	if (new_channel_topic.empty()) // no second parameter or it does not start with ':' - return the topic
+	if (!ch.client_in_channel(client))		// client needs to be in channel
+		response += std::string(HOSTNAME) + " " + std::string(ERR_NOTONCHANNEL) + " " + ch.get_channel_name() + " :You're not on that channel";
+	else if (!ch.allowed_to_set_topic(client.get_nickname()))
+		response += std::string(HOSTNAME) + " " + std::string(ERR_CHANOPRIVSNEEDED) + " " + ch.get_channel_name() + " :You're not a channel operator";
+	else if (new_channel_topic.empty())		// no second parameter or it does not start with ':' - return the topic
 	{	
 		response += std::string(HOSTNAME) + " " + std::string(RPL_TOPIC) + " " + msg->get_sender()->get_nickname() + " " ;
 		response += ch.get_channel_name();
@@ -94,23 +87,13 @@ int	Commands::exec_topic(Server *server, Message *msg)
 			response +=" :No topic is set."; 
 		else
 			response += " :" + ch.get_topic(); 
-		msg->send_to(msg->get_sender(), response);
-		return (332);
-	}
-	
-	if (!ch.allowed_to_set_topic(client.get_nickname()))
-	{
-		response += std::string(HOSTNAME) + " " + std::string(ERR_CHANOPRIVSNEEDED);
-		msg->send_to(msg->get_sender(), response);
-		return (482);
 	}
 	else 
 	{
 		ch.set_topic(new_channel_topic);
 		response = ":" + msg->get_sender()->get_full_client_identifier() + " " + msg->get_raw_content();
-		msg->send_to(msg->get_sender(), response);
 	}
-	return (0);
+	return (msg->send_to(msg->get_sender(), response));		// we only really need to return an error if send fails
 }
 
 int	Commands::exec_kick(Server *server, Message *msg)
