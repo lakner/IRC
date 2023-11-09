@@ -163,11 +163,15 @@ void	Channel::send_user_list(Client *client)
 	msg.send_from_server(client, msg_content);
 }
 
-int Channel::send_to_all_in_channel(Message *msg)
+int Channel::send_to_all_in_channel(std::string content)
 {
 	std::map<std::string, Client*>::iterator it;
+	Message msg;
 	for (it = _client_list.begin(); it != _client_list.end(); it++)
-		msg->send_to(it->second, msg->get_payload());
+	{
+		std::cout << "send_to_all_in_channel: Iterating over client list. Current client: " << it->second->get_nickname() << std::endl;
+		msg.send_to(it->second, content);
+	}
 	return 0;
 }
 

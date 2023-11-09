@@ -32,9 +32,7 @@ int	Commands::execute(Server *server, Message *msg)
 	else if (command == "USER" && msg->get_sender()->is_authd() == 1)
 		return (exec_user(msg));
 	else if (command == "PRIVMSG" && msg->get_sender()->is_authd())
-	{
 		return(exec_privmsg(server, msg));
-	}
 	else if (command == "JOIN" && msg->get_sender()->is_authd())
 		return(exec_join(server, msg));
 	else if (command == "INVITE" && msg->get_sender()->is_authd())
@@ -250,7 +248,7 @@ int Commands::exec_nick(Message *msg, Server *serv)
 		msg->send_to(msg->get_sender(), ERR_ERRONEUSNICKNAME);
 		return (atoi(ERR_ERRONEUSNICKNAME));
 	}
-	else if (nickname_exists(n_name, serv))
+	else if (serv->nickname_exists(n_name))
 	{
 		msg->send_to(msg->get_sender(), std::string(HOSTNAME) + ERR_NICKNAMEINUSE + " " + msg->get_sender()->get_nickname() + " " + n_name + " :Nickname is already in use.");
 		return (atoi(ERR_NICKNAMEINUSE));
@@ -372,113 +370,44 @@ int Commands::exec_join(Server *server, Message *msg)
 	return (0);
 }
 
-int Commands::nickname_exists(std::string name, Server *serv)
-{
-	std::map<const int, Client>& clientMap = serv->get_clients();
-	std::map<const int, Client>::iterator it = clientMap.begin();
-
-	for (; it != clientMap.end(); it++)
-	{
-		Client cl = it->second;
-
-		if (cl.get_nickname() == name)
-			return 1; // Nickname found
-	}
-	return 0; // Nickname not found
-}
-
-// Client& Commands::find_client(std::string name, Server *serv)
-// {
-// 	std::map<const int, Client>& clientMap = serv->get_clients();
-// 	std::map<const int, Client>::iterator it = clientMap.begin();
-
-// 	for (; it != clientMap.end(); it++)
-// 	{
-// 		Client cl = it->second;
-
-// 		if (cl.get_nickname() == name)
-// 			return it->second; // Nickname found
-// 	}
-// 	return 0; // Nickname not found
-// }
-
 int	Commands::exec_privmsg(Server *server, Message *msg)
 {
 	std::string	s_recipient;
 	std::stringstream ss(msg->get_raw_content());
 	std::string payload;
 	ss >> s_recipient >> s_recipient; // Read the second word (skipping leading whitespace)
-	Client *recpnt = NULL;
 
-	(void) server;
-
-	std::map<const int, Client>::iterator it;
-	// for (it = Server::get_clients().begin(); it != Server::get_clients().end(); it++)
-	// {
-	// 	// Check for ":" in the recipient here and throw an error?
-	// 	Client* client = &(it->second);
-	// 	if (client->get_nickname() == s_recipient) 
-	// 	{
-	// 		recpnt = client;
-	// 		break; 
-	// 	}
-	// }
-
-	if (!recpnt)
-	{
-		msg->send_from_server(msg->get_sender(), "PRIVMSG: recipient not found.\n");
-		return -1;
-	}
-		// With stringstream we only get the first word, 
-	// but we need the entire portion of the command following a ':'
 	if (msg->get_raw_content().find(":") == std::string::npos)
 	{
 		msg->send_from_server(msg->get_sender(), "PRIVMSG: message not found.\n");
 		return -1;
 	}
-	else
-	{
-		payload = msg->get_raw_content().substr(msg->get_raw_content().find(":") + 1, msg->get_raw_content().size());
-		std::cout << "PRIVMSG: Recipient is: "<< s_recipient << " with _recpnt " << recpnt << std::endl;
-		std::cout << "PRIVMSG: Payload is: " << payload << std::endl;
-	}
 
-	if (!msg->get_sender()->is_authd())
+	payload = msg->get_raw_content().substr(msg->get_raw_content().find(":"), msg->get_raw_content().size());
+	std::cout << "PRIVMSG: Payload is: " << payload << std::endl;
+	if (server->nickname_exists(s_recipient))
 	{
-		send(msg->get_sender()->get_client_fd(), "Client not authorized! Try connecting with: PASS password\r\n", 59, 0);
-		return (0);
+		Client& recpnt = server->get_client(s_recipient);
+		std::cout << "PRIVMSG: Recipient is: "<< s_recipient << std::endl;
+		if (send(recpnt.get_client_fd(), (msg->get_sender())->get_nickname().c_str(), msg->get_sender()->get_nickname().size(), 0) == -1 
+			|| send(recpnt.get_client_fd(), " client sent: '", 15, 0) == -1
+			|| send(recpnt.get_client_fd(), (payload + std::string("'\r\n")).c_str(), payload.size() + 3, 0) == -1)
+		{
+			std::cout << "Error sending with send()." << std::endl;
+			throw "Error sending.";
+			return(-1);
+		}
 	}
-
-	if (send(recpnt->get_client_fd(), (msg->get_sender())->get_nickname().c_str(), msg->get_sender()->get_nickname().size(), 0) == -1 
-			|| send(recpnt->get_client_fd(), " client sent: '", 15, 0) == -1
-			|| send(recpnt->get_client_fd(), (payload + std::string("'\r\n")).c_str(), payload.size() + 3, 0) == -1)
+	else if(server->channel_exists(s_recipient))
 	{
-		std::cout << "Error sending with send()." << std::endl;
-		throw "Error sending.";
-		return(-1);
+		std::cout << "PRIVMSG: sending to channel '" << s_recipient << "'." << std::endl;
+		Channel &channel = server->get_channel(s_recipient);
+		std::string msg_content = ":" + msg->get_sender()->get_full_client_identifier();
+		msg_content += " PRIVMSG " + s_recipient + " " + payload;
+		channel.send_to_all_in_channel(msg_content);
 	}
 	return 0;
 }
-
-// int	Commands::client_belong_to_channel(
-// 		Server *server, std::string channel_name, std::string nickname)
-// {
-// 	if (server->channel_exists(channel_name))
-// 	{
-// 		Channel &ch = server->get_channel(channel_name);
-// 		if (!nickname_exists(nickname, server))
-// 			return (-2);
-// 		std::map<std::string, Client*>::iterator it;
-
-// 		for (it = ch.get_users().begin(); it != ch.get_users().end(); it++) {
-// 			Client client = *it->second;
-// 			if (client.get_nickname() == nickname)
-// 				return 1; // Nickname found
-// 		}
-// 		return (0);
-// 	}
-// 	return (-1); //channel doesn't exist
-// }
 
 int	Commands::allow_to_invite(
 		Server *server, std::string channel_name, std::string nickname)
