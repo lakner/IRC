@@ -18,12 +18,18 @@ void	Client::set_read_buffer(char *buffer)
 	_read_buffer += std::string(buffer);
 }
 
+
 std::string	Client::get_read_buffer(void)
 {
 	return (_read_buffer);
 }
 
 void	Client::set_write_buffer(std::string buffer)
+{
+	_write_buffer = buffer;
+}
+
+void	Client::append_write_buffer(std::string buffer)
 {
 	_write_buffer += buffer;
 }

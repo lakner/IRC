@@ -105,13 +105,15 @@ int	Message::send_to(Client *new_recpnt, std::string content)
 	// char hostname[64] = ":127.0.0.1";
 	// //gethostname(hostname, sizeof(hostname));
 	// content = std::string(":") + hostname + " " + content;
-	if (send(new_recpnt->get_client_fd(), (content + "\r\n").c_str(), content.size() + 2, 0) == -1)
-	{
-		std::cout << "Error sending with send()." << std::endl;
-		throw "Error sending.";
-		return(-1);
-	}
-	std::cout << "SENDING BACK TO CLIENT: " << content << std::endl;
+	content += "\r\n";
+	new_recpnt->append_write_buffer(content);
+	// if (send(new_recpnt->get_client_fd(), (content + "\r\n").c_str(), content.size() + 2, 0) == -1)
+	// {
+	// 	std::cout << "Error sending with send()." << std::endl;
+	// 	throw "Error sending.";
+	// 	return(-1);
+	// }
+	std::cout << "SENDING BACK TO CLIENT, put in write buffer: " << content << std::endl;
 	return (0);
 }
 

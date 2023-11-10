@@ -53,6 +53,11 @@ struct addrinfo*	Server::create_listener_socket(struct addrinfo* addrinfo)
 		fcntl(this->_server_sock_fd, F_SETFL, O_NONBLOCK);
 		setsockopt(this->_server_sock_fd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int));
 		
+		int send_buffer_size;
+		socklen_t optlen = sizeof(send_buffer_size);
+    	getsockopt(this->_server_sock_fd, SOL_SOCKET, SO_SNDBUF, &send_buffer_size, &optlen);
+		std::cout << "OPTLEN send_buffer_size = " << send_buffer_size << std::endl;
+		
 		if (bind(this->_server_sock_fd, p->ai_addr, p->ai_addrlen) < 0)
 		{
 			close(this->_server_sock_fd);
@@ -70,8 +75,9 @@ int	Server::run()
 	_pollfds.reserve(1000);	
 	std::memset(&pfd, 0, sizeof(pfd));
 	pfd.fd = this->_server_sock_fd;
-	pfd.events = POLLIN;
+	pfd.events = POLLIN | POLLOUT;
 	_pollfds.push_back(pfd);
+	bool increment = true;
 
 	while (1)
 	{
@@ -83,24 +89,31 @@ int	Server::run()
 		for(std::vector< pollfd >::iterator it = _pollfds.begin();
 			it != _pollfds.end(); )
 		{
-			if ((*it).revents & POLLIN)
+			increment = true;
+			if (it->revents & POLLIN)
 			{
-				if ((*it).fd == this->_server_sock_fd)
+				if (it->fd == this->_server_sock_fd)
 					new_client_connection();
 				else
 				{
-					if (read_from_existing_client((*it).fd) <= 0)
+					if (read_from_existing_client(it->fd) <= 0)
 					{
 						std::map<const int, Client>::iterator it1 = _clients.find(it->fd);
 						if (it1 != _clients.end())
 							_clients.erase(it1);
-						(*it).revents = 0;
+						it->revents = 0;
 						it = this->_pollfds.erase(it);
-						continue;
+						increment = false;
 					}
 				}
 			}
-			it++;
+			if(it->revents & POLLOUT)
+			{
+				std::cout << "POLLOUT POLLOUT POLLOUT POLLOUT POLLOUT POLLOUT" << std::endl;
+				send_to_client(it->fd);
+			}
+			if (increment)
+				it++;
 		}
 	}
 }
@@ -157,15 +170,33 @@ void	Server::new_client_connection()
 	}
 	else
 	{
+		fcntl(this->_server_sock_fd, F_SETFL, O_NONBLOCK);
 		fcntl(new_client_socket, F_SETFL, O_NONBLOCK);
 		add_client(new_client_socket, read_client_ipv4_address(client_addr));
 
 		pfd.fd = new_client_socket;
-		pfd.events = POLLIN; // expand events later
+		pfd.events = POLLIN | POLLOUT; // expand events later
 		pfd.revents = 0;
+		fcntl(pfd.fd, F_SETFL, O_NONBLOCK);
 		this->_pollfds.push_back(pfd);
 		std::cout << "Server: new connecton from client added" << std::endl;
 	}
+}
+
+int	Server::send_to_client(int client_fd)
+{
+	Client		&client = get_client(client_fd);
+	std::string	to_send = client.get_write_buffer();
+	// const char*	buf		= to_send.c_str();
+
+	int numbytes = send(client_fd, to_send.c_str(), to_send.size(), 0);
+	if (numbytes == -1)
+		return numbytes;
+	if (static_cast<size_t>(numbytes) < to_send.size())
+		client.set_write_buffer(to_send.substr(numbytes));
+	else
+		client.clear_write_buffer();
+	return 0;
 }
 
 int	Server::read_from_existing_client(int client_fd)
@@ -205,34 +236,6 @@ int	Server::read_from_existing_client(int client_fd)
 	return(nbytes);
 }
 
-
-int	Server::send_to_all_clients(Message *msg)
-{
-	if (!msg->get_sender()->is_authd())
-	{
-		send(msg->get_sender()->get_client_fd(), "Not authorized as a valid user!! Try to connect with: PASS password\r\n", 69, 0);
-		return (0);
-	}
-	// We got some good data from a client
-	for(std::map<const int, Client>::iterator it = _clients.begin();
-		it != _clients.end(); it++)
-	{
-		// don't send back to the server
-		if (this->_server_sock_fd == it->first || !it->second.is_authd())
-			continue;
-
-		if (send(it->first, (msg->get_sender())->get_nickname().c_str(), msg->get_sender()->get_nickname().size(), 0) == -1 
-			|| send(it->first, " client send:  ", 15, 0) == -1
-			|| send(it->first, (msg->get_payload() + std::string("\r\n")).c_str(), msg->get_payload().size() + 2, 0) == -1)
-		{
-			std::cout << "Error sending with send()." << std::endl;
-			throw "Error sending.";
-			return(-1);
-		}
-	}
-	return(0);
-}
-
 std::map<std::string, Channel>&	Server::get_channels()
 {
 	return(_channels);
@@ -262,23 +265,6 @@ std::string	Server::read_client_ipv4_address(struct sockaddr& client_addr)
 	return(std::string(ip_str));
 }
 
-int Server::channel_exists(std::string channel_name, Channel& myChannel)
-{
-	std::map<std::string, Channel>::iterator it = _channels.begin();
-
-	for (; it != _channels.end(); it++) {
-		Channel &cl = it->second;
-
-		if (cl.get_channel_name() == channel_name)
-		{
-			myChannel = cl;
-			return 1; // Nickname found
-		}
-	}
-
-	return 0; // Nickname not found
-}
-
 int	Server::channel_exists(std::string channel_name)
 {
 	std::map<std::string, Channel>::iterator it = _channels.begin();
@@ -301,7 +287,6 @@ Channel&	Server::get_channel(std::string name)
 		Channel &ch = it->second;
 		if (it->second.get_channel_name() == name)
 			return(ch);
-		
 	}
 	return it->second;
 }

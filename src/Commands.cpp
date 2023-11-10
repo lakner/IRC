@@ -19,7 +19,7 @@ Commands::~Commands()
 
 int	Commands::execute(Server *server, Message *msg)
 {
-	std::cout << "MESSAGE: " << msg->get_command() << std::endl;
+	std::cout << "execute: COMMAND:" << msg->get_command() << std::endl;
 	std::string command = msg->get_command();
 	if (command == "CAP")							// change to switch case
 		return (exec_cap(msg));
@@ -41,8 +41,7 @@ int	Commands::execute(Server *server, Message *msg)
 		return(exec_kick(server, msg));
 	else if (command == "TOPIC" && msg->get_sender()->is_authd())
 		return(exec_topic(server, msg)); //change
-	else 
-		return(server->send_to_all_clients(msg)); // maybe first send into the clients writebuffer
+	return (-1);
 }
 
 int	Commands::exec_topic(Server *server, Message *msg)
@@ -211,6 +210,8 @@ int Commands::exec_pass(Server *server, Message *msg)
 	std::cout << "exec_pass: " << "payload: " << payload << " server->get_pass(): " << server->get_pass() << std::endl;
 	if (payload == server->get_pass() && !msg->get_sender()->is_authd())
 	{
+		std::cout << "exec_pass: authenticating." << std::endl;
+		msg->get_sender()->append_write_buffer("Hello hello!\r\n");
 		msg->get_sender()->authenticate(1);
 		return 0;
 	}
@@ -298,7 +299,6 @@ int Commands::exec_user(Message *msg)
 // instead of just one channel/ one password, but I don't know if we really need to implement that?
 int Commands::exec_join(Server *server, Message *msg)
 {
-	(void) server;
 	std::cout << "JOIN: Payload is: " << msg->get_payload() << std::endl;
 	
 	std::stringstream ss(msg->get_payload());
@@ -328,12 +328,7 @@ int Commands::exec_join(Server *server, Message *msg)
 		std::getline(passstr, pass, ',');
 		vpasswords.push_back(pass);
 	}
-	// std::cout << "JOIN channels: ";
-	// // output the vector:
-	// std::copy(vchannels.begin(), vchannels.end(), std::ostream_iterator<std::string>(std::cout, " "));
-	// std::cout << std::endl;
 
-	// TODO: Actually join the channels here
 	std::map<std::string, Channel>& channels = server->get_channels();
 	
 	for (unsigned int i = 0; i < vchannels.size(); i++)
@@ -384,14 +379,17 @@ int	Commands::exec_privmsg(Server *server, Message *msg)
 	{
 		Client& recpnt = server->get_client(s_recipient);
 		std::cout << "PRIVMSG: Recipient is: "<< s_recipient << std::endl;
-		if (send(recpnt.get_client_fd(), (msg->get_sender())->get_nickname().c_str(), msg->get_sender()->get_nickname().size(), 0) == -1 
-			|| send(recpnt.get_client_fd(), " client sent: '", 15, 0) == -1
-			|| send(recpnt.get_client_fd(), (payload + std::string("'\r\n")).c_str(), payload.size() + 3, 0) == -1)
-		{
-			std::cout << "Error sending with send()." << std::endl;
-			throw "Error sending.";
-			return(-1);
-		}
+		std::string message = ":" + msg->get_sender()->get_full_client_identifier() + " ";
+		message += recpnt.get_nickname() + " " + msg->get_raw_content();
+		msg->send_to(&recpnt, message);
+		// if (send(recpnt.get_client_fd(), (msg->get_sender())->get_nickname().c_str(), msg->get_sender()->get_nickname().size(), 0) == -1 
+		// 	|| send(recpnt.get_client_fd(), " client sent: '", 15, 0) == -1
+		// 	|| send(recpnt.get_client_fd(), (payload + std::string("'\r\n")).c_str(), payload.size() + 3, 0) == -1)
+		// {
+		// 	std::cout << "Error sending with send()." << std::endl;
+		// 	throw "Error sending.";
+		// 	return(-1);
+		// }
 	}
 	else if(server->channel_exists(s_recipient))
 	{
