@@ -99,3 +99,16 @@ std::string		Client::get_full_client_identifier()
 {
 	return(_full_client_identifier);
 }
+
+int	Client::send_all_in_write_buffer()
+{
+	std::string to_send = _write_buffer;
+	int numbytes = send(_client_fd, to_send.c_str(), to_send.size(), 0);
+	if (numbytes == -1)
+		return numbytes;
+	if (static_cast<size_t>(numbytes) < to_send.size())
+		set_write_buffer(to_send.substr(numbytes));
+	else
+		clear_write_buffer();
+	return 0;
+}

@@ -56,7 +56,6 @@ class Server
 		int								read_from_existing_client(int client_fd);
 		void							add_client(int client_fd, std::string client_ipv4);
 		std::string						read_client_ipv4_address(struct sockaddr& client_addr);
-		int								send_to_client(int client_fd);
 };
 
 #endif

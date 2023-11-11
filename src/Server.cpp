@@ -4,6 +4,7 @@ Server::~Server()
 {
 }
 
+
 Server::Server(char* port, char* password) : _port(port), _password(password)
 {
 }
@@ -13,6 +14,52 @@ const std::string	Server::get_pass()
 {
 	return(_password);
 }
+
+
+std::map<const int, Client>&	Server::get_clients()
+{
+	return (_clients);
+}
+
+
+std::map<std::string, Channel>&	Server::get_channels()
+{
+	return(_channels);
+}
+
+
+Client&		Server::get_client(int client_fd)
+{
+	std::map<const int, Client>::iterator it = _clients.find(client_fd);
+	return (it->second);
+}
+
+
+Client&		Server::get_client(std::string client_name)
+{
+	std::map<const int, Client>::iterator it = _clients.begin();
+
+	for (; it != _clients.end(); it++)
+	{
+		if ((it->second).get_nickname() == client_name)
+			return (it->second);
+	}
+	return (it->second);
+}
+
+Channel&	Server::get_channel(std::string name)
+{
+	std::map<std::string, Channel>::iterator it = _channels.begin();
+
+	for (; it != _channels.end(); it++)
+	{
+		Channel &ch = it->second;
+		if (it->second.get_channel_name() == name)
+			return(ch);
+	}
+	return it->second;
+}
+
 
 int	Server::prepare()
 {
@@ -105,42 +152,12 @@ int	Server::run()
 				}
 			}
 			if(it->revents & POLLOUT)
-				send_to_client(it->fd);
+				get_client(it->fd).send_all_in_write_buffer();
 			it++;
 		}
 	}
 }
 
-void	Server::add_client(int client_fd, std::string ip_v4_addr)
-{
-	Client		new_client(client_fd, ip_v4_addr);
-
-	//std::cout << "ADD CLIENT: " << new_client.get_client_fd() << std::endl;
-	_clients.insert(std::pair<int, Client>(client_fd, new_client));
-}
-
-Client&		Server::get_client(int client_fd)
-{
-	std::map<const int, Client>::iterator it = _clients.find(client_fd);
-	return (it->second);
-}
-
-Client&		Server::get_client(std::string client_name)
-{
-	std::map<const int, Client>::iterator it = _clients.begin();
-
-	for (; it != _clients.end(); it++)
-	{
-		if ((it->second).get_nickname() == client_name)
-			return (it->second);
-	}
-	return (it->second);
-}
-
-std::map<const int, Client>&	Server::get_clients()
-{
-	return (_clients);
-}
 
 void	Server::new_client_connection()
 {
@@ -174,20 +191,6 @@ void	Server::new_client_connection()
 	}
 }
 
-int	Server::send_to_client(int client_fd)
-{
-	Client		&client = get_client(client_fd);
-	std::string	to_send = client.get_write_buffer();
-
-	int numbytes = send(client_fd, to_send.c_str(), to_send.size(), 0);
-	if (numbytes == -1)
-		return numbytes;
-	if (static_cast<size_t>(numbytes) < to_send.size())
-		client.set_write_buffer(to_send.substr(numbytes));
-	else
-		client.clear_write_buffer();
-	return 0;
-}
 
 int	Server::read_from_existing_client(int client_fd)
 {
@@ -226,18 +229,15 @@ int	Server::read_from_existing_client(int client_fd)
 	return(nbytes);
 }
 
-std::map<std::string, Channel>&	Server::get_channels()
+
+void	Server::add_client(int client_fd, std::string ip_v4_addr)
 {
-	return(_channels);
+	Client		new_client(client_fd, ip_v4_addr);
+
+	//std::cout << "ADD CLIENT: " << new_client.get_client_fd() << std::endl;
+	_clients.insert(std::pair<int, Client>(client_fd, new_client));
 }
 
-void Server::add_channel(std::string name, std::string pass)
-{
-	if (_channels.find(name) == _channels.end())
-		_channels[name] = Channel(name, pass);
-	else
-		std::cerr << "Server::add_channel: Trying to add a channel that already exists." << std::endl;
-}
 
 std::string	Server::read_client_ipv4_address(struct sockaddr& client_addr)
 {
@@ -249,6 +249,16 @@ std::string	Server::read_client_ipv4_address(struct sockaddr& client_addr)
 	std::cout << "New client IP address: " << ip_str << std::endl;
 	return(std::string(ip_str));
 }
+
+
+void Server::add_channel(std::string name, std::string pass)
+{
+	if (_channels.find(name) == _channels.end())
+		_channels[name] = Channel(name, pass);
+	else
+		std::cerr << "Server::add_channel: Trying to add a channel that already exists." << std::endl;
+}
+
 
 int	Server::channel_exists(std::string channel_name)
 {
@@ -263,18 +273,6 @@ int	Server::channel_exists(std::string channel_name)
 	return 0; // Nickname not found
 }
 
-Channel&	Server::get_channel(std::string name)
-{
-	std::map<std::string, Channel>::iterator it = _channels.begin();
-
-	for (; it != _channels.end(); it++)
-	{
-		Channel &ch = it->second;
-		if (it->second.get_channel_name() == name)
-			return(ch);
-	}
-	return it->second;
-}
 
 bool	Server::nickname_exists(std::string nickname)
 {
