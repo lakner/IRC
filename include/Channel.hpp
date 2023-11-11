@@ -25,9 +25,9 @@ class	Channel
 		~Channel();
 		int								add_user(Client *client, std::string password);
 		int								send_to_all_in_channel(std::string msg);
-		int								remove_user(Client *client, std::string password);
-		int								add_operator(Client *client, std::string password);
-		int								remove_operator(Client *client, std::string password);
+		int								remove_user(Client *client);
+		int								add_operator(Client *client);
+		int								remove_operator(Client *client);
 		bool							client_in_channel(Client &client);
 		std::string						get_channel_name( void );
 		std::map<std::string, Client*>&	get_users();
@@ -37,6 +37,8 @@ class	Channel
 		std::string						get_topic();
 		void							set_topic( std::string new_topic );
 		bool							allowed_to_set_topic(std::string nickname);
+		bool							allowed_to_invite_kick(std::string nickname);
+		void							kick(std::string nickname);
 		
 	private:
 		std::string						_channel_name;

@@ -40,7 +40,7 @@ int	Commands::execute(Server *server, Message *msg)
 	else if (command == "KICK" && msg->get_sender()->is_authd())
 		return(exec_kick(server, msg));
 	else if (command == "TOPIC" && msg->get_sender()->is_authd())
-		return(exec_topic(server, msg)); //change
+		return(exec_topic(server, msg)); 
 	return (-1);
 }
 
@@ -97,47 +97,66 @@ int	Commands::exec_topic(Server *server, Message *msg)
 
 int	Commands::exec_kick(Server *server, Message *msg)
 {
-	std::stringstream ss (msg->get_payload());
-	std::string channel_name, nickname;
+	std::stringstream	ss (msg->get_payload());
+	std::string			sender_nick = msg->get_sender()->get_nickname();
+	std::string			channel_name, nick_to_kick, reason = "";
+	std::string			response = std::string(HOSTNAME) + " ";
 	Client& client = *(msg->get_sender());
 
-	ss >> nickname >> channel_name;
-	if (nickname.empty() || channel_name.empty())
+	ss >> channel_name >> nick_to_kick;
+	if (channel_name == nick_to_kick)
 	{
-		msg->send_to(msg->get_sender(), std::string(HOSTNAME) + std::string(ERR_NEEDMOREPARAMS));
-		return (461);
+		if (msg->get_payload().find(":") != std::string::npos)
+			nick_to_kick = msg->get_payload().substr(msg->get_payload().find(":"));
 	}
-	
-	if(!server->channel_exists(channel_name))
+	else
 	{
-		msg->send_to(msg->get_sender(), std::string(HOSTNAME) + std::string(ERR_NOSUCHCHANNEL));
-		return (403);
+		if (msg->get_payload().find(":") != std::string::npos)
+			reason = msg->get_payload().substr(msg->get_payload().find(":"));
+	}
+	if (nick_to_kick.empty() || channel_name.empty())
+	{
+		response += std::string(ERR_NEEDMOREPARAMS) + " " + sender_nick + " ";
+		response += channel_name + " :No channel or user specified";
+		return (msg->send_to(&client, response));
+	}
+	else if(!server->channel_exists(channel_name))
+	{
+		response += std::string(ERR_NOSUCHCHANNEL) + " " + sender_nick + " " + channel_name + " :No such channel";
+		return (msg->send_to(&client, response));
 	}
 
 	Channel &ch = server->get_channel(channel_name);
-	if (!ch.client_in_channel(client))
+	std::cout << "KICK: nick_to_kick: " << nick_to_kick << std::endl; 
+	if (!server->nickname_exists(nick_to_kick))
 	{
-		msg->send_to(msg->get_sender(), std::string(HOSTNAME) + std::string(ERR_NOTONCHANNEL));
-		return (442);
+		response += std::string(ERR_NOSUCHNICK) + " " + sender_nick + " ";
+		response += nick_to_kick + " " + channel_name + " :No such nick";
 	}
-
-	if (!ch.client_in_channel(client))
+	else if (!ch.client_in_channel(server->get_client(nick_to_kick)))
 	{
-		msg->send_to(msg->get_sender(), std::string(HOSTNAME) + std::string(ERR_NOSUCHNICK));
-		return (401);
+		response += std::string(ERR_USERNOTINCHANNEL) + " " + sender_nick + " ";
+		response += nick_to_kick + " " + channel_name + " :They aren't on that channel";
+		// msg->send_to(&client, std::string(HOSTNAME) + std::string(ERR_NOTONCHANNEL));
+		// return (442);
 	}
-
-	if (!allow_to_invite(server, channel_name, client.get_nickname()))
+	else if (!ch.allowed_to_invite_kick(client.get_nickname()))
 	{
-		msg->send_to(msg->get_sender(), std::string(HOSTNAME) + std::string(ERR_CHANOPRIVSNEEDED));
-		return (482);
+		response += std::string(ERR_CHANOPRIVSNEEDED) + " " + sender_nick + " " + nick_to_kick;
+		response += " " + channel_name + " :You're not a channel operator";
+		//msg->send_to(msg->get_sender(), std::string(HOSTNAME) + std::string(ERR_CHANOPRIVSNEEDED));
 	}
-
-	msg->send_to(msg->get_sender(), std::string(HOSTNAME) + std::string(ERR_USERNOTINCHANNEL));
-	return (441);
-
-	kick(server, channel_name, nickname);
-	return (0);
+	else // we can kick the user
+	{
+		response = ":" + client.get_full_client_identifier() + " KICK " + channel_name;
+		if (reason.empty())
+			response += " " + nick_to_kick + " :" + sender_nick;
+		else
+			response += " " + nick_to_kick + " " + reason;
+		msg->send_to(&(server->get_client(nick_to_kick)), response);
+		ch.kick(nick_to_kick);
+	}
+	return (msg->send_to(&client, response));
 }
 
 int	Commands::exec_invite(Server *server, Message *msg)
@@ -166,7 +185,7 @@ int	Commands::exec_invite(Server *server, Message *msg)
 		return (442);
 	}
 
-	if (!allow_to_invite(server, channel_name, client.get_nickname()))
+	if (!ch.allowed_to_invite_kick(client.get_nickname()))
 	{
 		msg->send_to(msg->get_sender(), std::string(HOSTNAME) + std::string(ERR_CHANOPRIVSNEEDED));
 		return (482);
@@ -211,7 +230,6 @@ int Commands::exec_pass(Server *server, Message *msg)
 	if (payload == server->get_pass() && !msg->get_sender()->is_authd())
 	{
 		std::cout << "exec_pass: authenticating." << std::endl;
-		msg->get_sender()->append_write_buffer("Hello hello!\r\n");
 		msg->get_sender()->authenticate(1);
 		return 0;
 	}
@@ -402,30 +420,6 @@ int	Commands::exec_privmsg(Server *server, Message *msg)
 	return 0;
 }
 
-int	Commands::allow_to_invite(
-		Server *server, std::string channel_name, std::string nickname)
-{
-	if (server->channel_exists(channel_name))
-	{
-		Channel &ch = server->get_channel(channel_name);
-		if (!ch.get_mode().o)
-			return (1);
-
-		std::map<std::string, Client*>& operatorMap = ch.get_operators();
-		std::map<std::string, Client*>::iterator it = operatorMap.begin();
-
-		for (; it != operatorMap.end(); it++) {
-			Client *client = it->second;
-
-			if (client->get_nickname() == nickname)
-				return (1); // Nickname found
-		}
-		return (0);
-	}
-	return (-1); //channel doesn't exist
-}
-
-
 
 //invite a user to a channel
 void	Commands::invite(Server *server, std::string channel_name, std::string nickname)
@@ -445,24 +439,5 @@ void	Commands::invite(Server *server, std::string channel_name, std::string nick
 	}
 }
 
-//kick a user from a channel
-void	Commands::kick(Server *server, std::string channel_name, std::string nickname)
-{
-	if (server->channel_exists(channel_name))
-	{
-		Channel &ch = server->get_channel(channel_name);
-		std::map<const int, Client>& clientMap = server->get_clients();
-		std::map<const int, Client>::iterator it = clientMap.begin();
 
-		for (; it != clientMap.end(); it++) {
-			Client cl = it->second;
-
-			if (cl.get_nickname() == nickname)
-			{
-				ch.remove_user(&cl, ch.get_password());
-				ch.remove_operator(&cl, ch.get_password());
-			}
-		}
-	}
-}
 

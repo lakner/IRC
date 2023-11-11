@@ -38,6 +38,9 @@ int		Channel::add_user(Client *client, std::string password)
 {
 	if (password == this->_password)
 	{
+		// first user automatically is an operator
+		if (_client_list.empty())
+			add_operator(client);
 		//_client_list.insert(std::pair<std::string, Client*>(client->get_nickname(), client));
 		_client_list[client->get_nickname()] = client;
 		notify_user_joined(client);
@@ -49,52 +52,40 @@ int		Channel::add_user(Client *client, std::string password)
 }
 
 //removes a client form the client list of the channel
-int		Channel::remove_user(Client *client, std::string password)
+int		Channel::remove_user(Client *client)
 {
-	if (password == this->_password)
-	{
-		std::string keyToRemove = client->get_nickname();
-		std::map<std::string, Client*>::iterator it = _client_list.find(keyToRemove);
-
-		if (it != _client_list.end()) {
-			_client_list.erase(it);
-		} else {
-			return (-1);
-		}
-		notify_user_exit(client);
-		send_topic(client);
-		send_user_list(client);
-		return 0;
+	std::string keyToRemove = client->get_nickname();
+	std::map<std::string, Client*>::iterator it = _client_list.find(keyToRemove);
+	if (it != _client_list.end()) {
+		_client_list.erase(it);
+	} else {
+		return (-1);
 	}
-	return -1;
+	notify_user_exit(client);
+	send_topic(client);
+	send_user_list(client);
+	return 0;
 }
 
-int		Channel::add_operator(Client *client, std::string password)
+int		Channel::add_operator(Client *client)
 {
-	if (password == this->_password)
-	{
-		_operator_list[client->get_nickname()] = client;
-		notify_user_is_operator(client);
-		return 0;
-	}
-	return -1;
+	_operator_list[client->get_nickname()] = client;
+	notify_user_is_operator(client);
+	return 0;
 }
 
 //removes a client form the operator list of the channel
-int		Channel::remove_operator(Client *client, std::string password)
+int		Channel::remove_operator(Client *client)
 {
-	if (password == this->_password)
-	{
-		std::string keyToRemove = client->get_nickname();
-		std::map<std::string, Client*>::iterator it = _operator_list.find(keyToRemove);
+	std::string keyToRemove = client->get_nickname();
+	std::map<std::string, Client*>::iterator it = _operator_list.find(keyToRemove);
 
-		if (it != _operator_list.end())
-		{
-			_operator_list.erase(it);
-			return 0;
-		} else {
-			return (-1);
-		}
+	if (it != _operator_list.end())
+	{
+		_operator_list.erase(it);
+		return 0;
+	} else {
+		return (-1);
 	}
 	return -1;
 }
@@ -198,6 +189,22 @@ bool	Channel::allowed_to_set_topic(std::string nickname)
 	return (false);
 }
 
+bool	Channel::allowed_to_invite_kick(std::string nickname)
+{
+	if (get_mode().o)
+		return (true);
+
+	std::map<std::string, Client*>::iterator it = _operator_list.begin();
+
+	for (; it != _operator_list.end(); it++) {
+		Client *client = it->second;
+
+		if (client->get_nickname() == nickname)
+			return (1); // Nickname found
+	}
+	return (false);
+}
+
 std::string	Channel::get_channel_name( void )
 {
 	return (_channel_name);
@@ -231,4 +238,23 @@ std::string	Channel::get_topic( void )
 void	Channel::set_topic( std::string new_topic )
 {
 	this->_topic = new_topic;
+}
+
+//kick a user from a channel
+void	Channel::kick(std::string nickname)
+{
+	std::map<std::string, Client*>::iterator it = _client_list.begin();
+
+	for (; it != _client_list.end(); it++) 
+	{
+		Client* cl = it->second;
+
+		if (cl->get_nickname() == nickname)
+		{
+			std::string msg;
+			msg = 
+			remove_user(cl);
+			remove_operator(cl);
+		}
+	}
 }
