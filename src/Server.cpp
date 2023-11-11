@@ -77,7 +77,6 @@ int	Server::run()
 	pfd.fd = this->_server_sock_fd;
 	pfd.events = POLLIN | POLLOUT;
 	_pollfds.push_back(pfd);
-	bool increment = true;
 
 	while (1)
 	{
@@ -86,10 +85,8 @@ int	Server::run()
 		{
 			throw std::runtime_error("Polling error");
 		}
-		for(std::vector< pollfd >::iterator it = _pollfds.begin();
-			it != _pollfds.end(); )
+		for(std::vector< pollfd >::iterator it = _pollfds.begin(); it != _pollfds.end();)
 		{
-			increment = true;
 			if (it->revents & POLLIN)
 			{
 				if (it->fd == this->_server_sock_fd)
@@ -103,17 +100,13 @@ int	Server::run()
 							_clients.erase(it1);
 						it->revents = 0;
 						it = this->_pollfds.erase(it);
-						increment = false;
+						continue;
 					}
 				}
 			}
 			if(it->revents & POLLOUT)
-			{
-				std::cout << "POLLOUT POLLOUT POLLOUT POLLOUT POLLOUT POLLOUT" << std::endl;
 				send_to_client(it->fd);
-			}
-			if (increment)
-				it++;
+			it++;
 		}
 	}
 }
@@ -170,14 +163,12 @@ void	Server::new_client_connection()
 	}
 	else
 	{
-		fcntl(this->_server_sock_fd, F_SETFL, O_NONBLOCK);
 		fcntl(new_client_socket, F_SETFL, O_NONBLOCK);
 		add_client(new_client_socket, read_client_ipv4_address(client_addr));
 
 		pfd.fd = new_client_socket;
-		pfd.events = POLLIN | POLLOUT; // expand events later
+		pfd.events = POLLIN | POLLOUT;
 		pfd.revents = 0;
-		fcntl(pfd.fd, F_SETFL, O_NONBLOCK);
 		this->_pollfds.push_back(pfd);
 		std::cout << "Server: new connecton from client added" << std::endl;
 	}
@@ -187,7 +178,6 @@ int	Server::send_to_client(int client_fd)
 {
 	Client		&client = get_client(client_fd);
 	std::string	to_send = client.get_write_buffer();
-	// const char*	buf		= to_send.c_str();
 
 	int numbytes = send(client_fd, to_send.c_str(), to_send.size(), 0);
 	if (numbytes == -1)
@@ -244,14 +234,9 @@ std::map<std::string, Channel>&	Server::get_channels()
 void Server::add_channel(std::string name, std::string pass)
 {
 	if (_channels.find(name) == _channels.end())
-	{
-		//Channel channel(name, pass);
 		_channels[name] = Channel(name, pass);
-	}
 	else
-	{
 		std::cerr << "Server::add_channel: Trying to add a channel that already exists." << std::endl;
-	}
 }
 
 std::string	Server::read_client_ipv4_address(struct sockaddr& client_addr)
