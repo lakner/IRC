@@ -61,6 +61,8 @@ int	Message::parse()
 		_command = "USER";
 	else if (_raw_content.rfind("INVITE", 0) == 0)
 		_command = "INVITE";
+	else if (_raw_content.rfind("invite", 0) == 0)
+		_command = "invite";
 	else if (_raw_content.rfind("KICK", 0) == 0)
 		_command = "KICK";
 	else if (_raw_content.rfind("PRIVMSG", 0) == 0)

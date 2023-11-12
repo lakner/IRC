@@ -35,7 +35,8 @@ int	Commands::execute(Server *server, Message *msg)
 		return(exec_privmsg(server, msg));
 	else if (command == "JOIN" && msg->get_sender()->is_authd())
 		return(exec_join(server, msg));
-	else if (command == "INVITE" && msg->get_sender()->is_authd())
+	else if ((command == "INVITE" || command == "invite")
+			&& msg->get_sender()->is_authd())
 		return(exec_invite(server, msg));
 	else if (command == "KICK" && msg->get_sender()->is_authd())
 		return(exec_kick(server, msg));
