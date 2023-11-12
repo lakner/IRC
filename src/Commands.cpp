@@ -107,7 +107,7 @@ int	Commands::exec_kick(Server *server, Message *msg)
 	if (channel_name == nick_to_kick)
 	{
 		if (msg->get_payload().find(":") != std::string::npos)
-			nick_to_kick = msg->get_payload().substr(msg->get_payload().find(":"));
+			nick_to_kick = msg->get_payload().substr(msg->get_payload().find(":") + 1);
 	}
 	else
 	{
