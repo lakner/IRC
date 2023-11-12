@@ -398,16 +398,8 @@ int	Commands::exec_privmsg(Server *server, Message *msg)
 		Client& recpnt = server->get_client(s_recipient);
 		std::cout << "PRIVMSG: Recipient is: "<< s_recipient << std::endl;
 		std::string message = ":" + msg->get_sender()->get_full_client_identifier() + " ";
-		message += recpnt.get_nickname() + " " + msg->get_raw_content();
+		message += msg->get_raw_content();
 		msg->send_to(&recpnt, message);
-		// if (send(recpnt.get_client_fd(), (msg->get_sender())->get_nickname().c_str(), msg->get_sender()->get_nickname().size(), 0) == -1 
-		// 	|| send(recpnt.get_client_fd(), " client sent: '", 15, 0) == -1
-		// 	|| send(recpnt.get_client_fd(), (payload + std::string("'\r\n")).c_str(), payload.size() + 3, 0) == -1)
-		// {
-		// 	std::cout << "Error sending with send()." << std::endl;
-		// 	throw "Error sending.";
-		// 	return(-1);
-		// }
 	}
 	else if(server->channel_exists(s_recipient))
 	{
