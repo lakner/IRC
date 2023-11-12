@@ -75,7 +75,7 @@ int	Message::parse()
 		std::string first_word;
 
 		ss >> first_word;
-		send_to(get_sender(), std::string(HOSTNAME) + std::string(ERR_ALREADYREGISTRED) + " " + get_sender()->get_nickname() + first_word + " :Unknown command");
+		send_to(get_sender(), std::string(HOSTNAME) + " " + ERR_UNKNOWNCOMMAND + " " + get_sender()->get_nickname() + " " + first_word + " :Unknown command");
 		return -1;
 	}
 	if (!_command.empty() && _raw_content.find(_command) != std::string::npos)
