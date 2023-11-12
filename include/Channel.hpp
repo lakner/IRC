@@ -25,6 +25,7 @@ class	Channel
 		~Channel();
 		int								add_user(Client *client, std::string password);
 		int								send_to_all_in_channel(std::string msg);
+		int								send_to_all_except(std::string content, Client& client);
 		int								remove_user(Client *client);
 		int								add_operator(Client *client);
 		int								remove_operator(Client *client);
@@ -45,7 +46,6 @@ class	Channel
 		std::string						_password;
 		std::string						_topic;
 		Mode							_mode;
-		//Server*						_server;
 		std::map<std::string, Client*>	_client_list;
 		std::map<std::string, Client*>	_operator_list;
 		void							notify_user_joined(Client *client);

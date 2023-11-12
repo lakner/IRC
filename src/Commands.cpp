@@ -415,7 +415,7 @@ int	Commands::exec_privmsg(Server *server, Message *msg)
 		Channel &channel = server->get_channel(s_recipient);
 		std::string msg_content = ":" + msg->get_sender()->get_full_client_identifier();
 		msg_content += " PRIVMSG " + s_recipient + " " + payload;
-		channel.send_to_all_in_channel(msg_content);
+		channel.send_to_all_except(msg_content, *(msg->get_sender()));
 	}
 	return 0;
 }

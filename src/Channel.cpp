@@ -166,6 +166,20 @@ int Channel::send_to_all_in_channel(std::string content)
 	return 0;
 }
 
+int Channel::send_to_all_except(std::string content, Client& client)
+{
+	std::map<std::string, Client*>::iterator it;
+	Message msg;
+	for (it = _client_list.begin(); it != _client_list.end(); it++)
+	{
+		std::cout << "send_to_all_except: Iterating over client list. Current client: " << it->second->get_nickname() << std::endl;
+		if (it->second != &client)
+			msg.send_to(it->second, content);
+	}
+	return 0;
+}
+
+
 bool	Channel::client_in_channel(Client& client)
 {
 	std::map<std::string, Client*>::iterator it = _client_list.begin();
