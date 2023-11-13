@@ -31,9 +31,8 @@ class Commands
 		static int	exec_kick(Server *server, Message *msg);
 		static int	exec_privmsg(Server *server, Message *msg);
 		static int	exec_topic(Server *server, Message *msg);
-		//static int	nickname_exists(std::string name, Server *serv);
+		static int	exec_who(Server *server, Message *msg);
 		static void	invite(Server *server, std::string channel_name, std::string nickname);
-		//static void	kick(Server *server, std::string channel_name, std::string nickname);
 };
 
 #endif

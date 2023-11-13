@@ -45,6 +45,45 @@ int	Commands::execute(Server *server, Message *msg)
 	return (-1);
 }
 
+int Commands::exec_who(Server *server, Message *msg)
+{
+	std::string			channel_name;
+	std::string 		response = std::string(HOSTNAME);
+	std::stringstream	ss(msg->get_payload());
+	
+	ss >> channel_name;
+
+	if (channel_name.empty())
+	{
+		response += std::string(HOSTNAME) + " " + ERR_NEEDMOREPARAMS;
+		return (msg->send_to(msg->get_sender(), response));
+	}
+	else if(!server->channel_exists(channel_name))
+	{
+		response += std::string(HOSTNAME) + " " + ERR_NOSUCHCHANNEL;
+		return (msg->send_to(msg->get_sender(), response));
+	}
+
+	Channel& ch = server->get_channel(channel_name);
+
+	response += std::string(RPL_WHOREPLY) + " " + channel_name;
+	std::map<std::string, Client*> users = ch.get_users();
+	std::map<std::string, Client*>::iterator it = users.begin();
+	for (; it != users.end(); it++)
+	{
+		response += " ";
+		if (ch.is_operator(it->first))
+			response += "@";
+		response += it->first;
+	}
+	response += " :1";
+	msg->send_to(msg->get_sender(), response);
+	response = std::string(HOSTNAME) + " " + RPL_ENDOFWHO + msg->get_sender()->get_nickname();
+	response += " " + channel_name + " :End of WHO list";
+	msg->send_to(msg->get_sender(), response);
+	return 0;
+}
+
 int	Commands::exec_topic(Server *server, Message *msg)
 {
 	std::string			payload = msg->get_payload();

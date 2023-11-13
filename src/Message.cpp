@@ -71,6 +71,8 @@ int	Message::parse()
 		_command = "JOIN";
 	else if (_raw_content.rfind("TOPIC", 0) == 0)
 		_command = "TOPIC";
+	else if (_raw_content.rfind("WHO", 0) == 0)
+		_command = "WHO";
 	else
 	{
 		std::stringstream ss(_raw_content);
@@ -82,9 +84,6 @@ int	Message::parse()
 	}
 	if (!_command.empty() && _raw_content.find(_command) != std::string::npos)
 	{
-		// You can get nc to send \r\n with the -c switch, like this:
-		// nc 127.0.0.1 6667 -c
-		// removed the +3/+2 because we're already stripping "\r\n" at the top
 		_payload = _raw_content.substr(_command.size(), std::string::npos);
 		// remove leading whitespaces
 		if (!_payload.empty() && _payload.find_first_not_of(" \n\r\t\f\v") < _payload.size())

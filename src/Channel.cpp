@@ -203,20 +203,24 @@ bool	Channel::allowed_to_set_topic(std::string nickname)
 	return (false);
 }
 
-bool	Channel::allowed_to_invite_kick(std::string nickname)
+bool	Channel::is_operator(std::string nickname)
 {
-	if (get_mode().o)
-		return (true);
-
 	std::map<std::string, Client*>::iterator it = _operator_list.begin();
 
 	for (; it != _operator_list.end(); it++) {
 		Client *client = it->second;
 
 		if (client->get_nickname() == nickname)
-			return (1); // Nickname found
+			return (true);
 	}
 	return (false);
+}
+
+bool	Channel::allowed_to_invite_kick(std::string nickname)
+{
+	if (get_mode().o)
+		return (true);
+	return(is_operator(nickname));
 }
 
 std::string	Channel::get_channel_name( void )

@@ -37,6 +37,7 @@ class	Channel
 		std::string						get_password();
 		std::string						get_topic();
 		void							set_topic( std::string new_topic );
+		bool							is_operator(std::string nickname);
 		bool							allowed_to_set_topic(std::string nickname);
 		bool							allowed_to_invite_kick(std::string nickname);
 		void							kick(std::string nickname);
