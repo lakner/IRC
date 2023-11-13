@@ -31,17 +31,20 @@ int	Commands::execute(Server *server, Message *msg)
 		return (exec_nick(msg, server));
 	else if (command == "USER" && msg->get_sender()->is_authd() == 1)
 		return (exec_user(msg));
-	else if (command == "PRIVMSG" && msg->get_sender()->is_authd())
+	if (!msg->get_sender()->is_authd())
+		return (-1);
+	else if (command == "PRIVMSG")
 		return(exec_privmsg(server, msg));
-	else if (command == "JOIN" && msg->get_sender()->is_authd())
+	else if (command == "JOIN")
 		return(exec_join(server, msg));
-	else if ((command == "INVITE" || command == "invite")
-			&& msg->get_sender()->is_authd())
+	else if ((command == "INVITE" || command == "invite"))
 		return(exec_invite(server, msg));
-	else if (command == "KICK" && msg->get_sender()->is_authd())
+	else if (command == "KICK")
 		return(exec_kick(server, msg));
-	else if (command == "TOPIC" && msg->get_sender()->is_authd())
-		return(exec_topic(server, msg)); 
+	else if (command == "TOPIC")
+		return(exec_topic(server, msg));
+	else if (command == "WHO")
+		return(exec_who(server, msg));
 	return (-1);
 }
 
@@ -94,6 +97,7 @@ int	Commands::exec_topic(Server *server, Message *msg)
 	std::string 		response = "";
 
 	ss >> channel_name;
+	
 	
 	// topic can contain spaces, we can't get it with stringstream
 	// we'll just get the stuff after the first ':'
