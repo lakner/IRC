@@ -120,9 +120,9 @@ int	Message::send_to(Client *new_recpnt, std::string content)
 
 int	Message::send_from_server(Client *new_recpnt, std::string content)
 {
-	char hostname[64] = "127.0.0.1";
+	//char hostname[64] = "127.0.0.1";
 	// //gethostname(hostname, sizeof(hostname));
-	content = std::string(":") + hostname + " " + content;
+	content = std::string(HOSTNAME) + content;
 	return(send_to(new_recpnt, content));
 }
 

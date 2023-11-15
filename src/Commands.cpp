@@ -290,6 +290,7 @@ int Commands::exec_pass(Server *server, Message *msg)
 	return 1;
 }
 
+//need to implement 
 bool is_valid_nickname(std::string name)
 {
 	// check for valid Characters 
@@ -359,6 +360,8 @@ int Commands::exec_user(Message *msg)
 // JOIN <channels> <passwords>
 // both channels and passwords can be a comma-separated list
 // instead of just one channel/ one password, but I don't know if we really need to implement that?
+
+//add JOIN 0
 int Commands::exec_join(Server *server, Message *msg)
 {
 	std::cout << "JOIN: Payload is: " << msg->get_payload() << std::endl;
@@ -395,7 +398,7 @@ int Commands::exec_join(Server *server, Message *msg)
 	
 	for (unsigned int i = 0; i < vchannels.size(); i++)
 	{
-		int ret;
+		std::string ret;
 		// new channel
 		if (channels.find(vchannels[i]) == channels.end())
 		{
@@ -410,13 +413,22 @@ int Commands::exec_join(Server *server, Message *msg)
 			ret = channels[vchannels[i]].add_user(msg->get_sender(), vpasswords[i]);
 		else
 			ret = channels[vchannels[i]].add_user(msg->get_sender(), "");
-		
-		if (ret != 0)
-			msg->send_from_server(msg->get_sender(), "JOIN: Error joining channel, wrong password?");
+
+		if (!ret.empty())
+		{
+			std::string error = ret + " " + msg->get_sender()->get_nickname() + " " + vchannels[i] + " ";
+			if (ret == ERR_BADCHANNELKEY)
+				error += ":Cannot join channel (incorrect channel key)";
+			if (ret == ERR_INVITEONLYCHAN)
+				error += ":Cannot join channel (invite only)";
+			if (ret == ERR_CHANNELISFULL)
+				error += ":Cannot join channel (channel is full)";
+			msg->send_from_server(msg->get_sender(), ret + " " + msg->get_sender()->get_nickname() + " " + vchannels[i] + " ");
+		}
 		else
 		{
-			msg->send_from_server(msg->get_sender(), "JOIN: Successfully joined channel " + vchannels[i] + "\n");
-			std::cout << msg->get_sender() << " joined channel " << vchannels[i] << std::endl;
+		//	msg->send_from_server(msg->get_sender(), "JOIN: Successfully joined channel " + vchannels[i] + "\n");
+			std::cout << msg->get_sender()->get_nickname() << " joined channel " << vchannels[i] << std::endl;
 		}
 	}
 	return (0);
@@ -474,6 +486,3 @@ void	Commands::invite(Server *server, std::string channel_name, std::string nick
 		}
 	}
 }
-
-
-

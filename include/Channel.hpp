@@ -23,7 +23,7 @@ class	Channel
 		Channel();
 		Channel(std::string channel_name, std::string password); // Server* server);
 		~Channel();
-		int								add_user(Client *client, std::string password);
+		std::string						add_user(Client *client, std::string password);
 		int								send_to_all_in_channel(std::string msg);
 		int								send_to_all_except(std::string content, Client& client);
 		int								remove_user(Client *client);

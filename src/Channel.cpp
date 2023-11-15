@@ -34,7 +34,7 @@ Channel::~Channel()
 }
 
 //if client already exist in a channel just notify
-int		Channel::add_user(Client *client, std::string password)
+std::string	Channel::add_user(Client *client, std::string password)
 {
 	if (password == this->_password)
 	{
@@ -46,9 +46,9 @@ int		Channel::add_user(Client *client, std::string password)
 		notify_user_joined(client);
 		send_topic(client);
 		send_user_list(client);
-		return 0;
+		return ("");
 	}
-	return -1;
+	return (ERR_BADCHANNELKEY);
 }
 
 //removes a client form the client list of the channel
@@ -133,7 +133,11 @@ void	Channel::notify_mode_changed(Client *client)
 void	Channel::send_topic(Client *client)
 {
 	Message msg;
-	std::string msg_content = std::string(RPL_TOPIC);
+	std::string msg_content;
+	if (_topic.empty())
+		msg_content = std::string(RPL_NOTOPIC);
+	else
+		msg_content = std::string(RPL_TOPIC);
 	msg_content += " " + client->get_nickname();
 	msg_content += " " + _channel_name + " :" + _topic;
 	msg.send_from_server(client, msg_content);
@@ -144,13 +148,15 @@ void	Channel::send_user_list(Client *client)
 	Message msg;
 	std::string msg_content = std::string(RPL_NAMREPLY); 
 	msg_content += " " + client->get_nickname();
-	msg_content += " " + _channel_name + " :";
+	msg_content += " = " + _channel_name + " :"; //add @ before operator name
 	
 	std::map<std::string, Client*>::iterator it;
 	for (it = _client_list.begin(); it != _client_list.end(); it++)
 		msg_content += it->first + " ";
 	msg.send_from_server(client, msg_content);
 	msg_content = std::string(RPL_ENDOFNAMES);
+	msg_content += " " + client->get_nickname();
+	msg_content += " " + _channel_name + " :End of /NAMES list";
 	msg.send_from_server(client, msg_content);
 }
 
