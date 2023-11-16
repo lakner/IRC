@@ -53,12 +53,12 @@ int	Commands::execute(Server *server, Message *msg)
 
 int Commands::exec_mode(Server *server, Message *msg)
 {
-	std::string			channel_name, modes; //, param1, param2, param3;
+	std::string			channel_name, modes, modes_set;
 	std::stringstream	ss(msg->get_payload());
 	bool				mode_state = 1; // 1(+/set) 0(-/unset)
 	Client				*sender = msg->get_sender();
 
-	ss >> channel_name >> modes; // >> param1 >> param2 >> param3;
+	ss >> channel_name >> modes;
 	if (channel_name[0] != '#')
 	{
 		msg->send_from_server(sender, std::string(ERR_NOSUCHNICK) + " " + sender->get_nickname() + " " + channel_name + " :No such nick");
@@ -73,16 +73,26 @@ int Commands::exec_mode(Server *server, Message *msg)
 	{
 		if (modes[i] == '+')
 		{
+			if (mode_state == 0 || i == 0)
+				modes_set += "+";
+			if (modes_set.size() == 2)
+				modes_set = "+";
 			mode_state = 1;
 			continue ;
 		}
 		if ( modes[i] == '-')
 		{
+			if (mode_state == 1 || i == 0)
+				modes_set += "-";
+			if (modes_set.size() == 2)
+				modes_set = "-";
 			mode_state = 0;
 			continue ;
 		}
-		server->get_channel(channel_name).set_mode(modes[i], mode_state, &ss, server);
+		modes_set += server->get_channel(channel_name).set_mode(modes[i], mode_state, &ss, server);
 	}
+	//implement message for combination of password and modes
+	msg->send_to(sender, ":" + sender->get_full_client_identifier() + " MODE " + channel_name + " :" + modes_set);
 	return (0);
 }
 
@@ -328,15 +338,19 @@ int Commands::exec_pass(Server *server, Message *msg)
 	return 1;
 }
 
+//not working
 bool Commands::is_valid_channel_name(std::string name)
 {
-	if (name.length() > 50 || !name.length())
-		return false;
-	if (std::string("&#+!").find(name[0]) != std::string::npos)
-		return false;
-	if (name.find_first_of(" \a,\r\n") != std::string::npos)
-		return false;
+	if (!name.empty())
+		return true;
 	return true;
+	// if (name.length() > 50 || !name.length())
+	// 	return false;
+	// if (std::string("&#+!").find(name[0]) != std::string::npos)
+	// 	return false;
+	// if (name.find_first_of(" \a,\r\n") != std::string::npos)
+	// 	return false;
+	// return true;
 }
 
 bool Commands::is_valid_nickname(std::string name)
@@ -447,7 +461,6 @@ int Commands::exec_join(Server *server, Message *msg)
 		}
 		vchannels.push_back(ch);
 	}
-	std::cout << "test " << std::endl;
 	std::stringstream passstr(s_passwords);
 	while (passstr.good())
 	{
@@ -457,7 +470,6 @@ int Commands::exec_join(Server *server, Message *msg)
 	}
 
 	std::map<std::string, Channel>& channels = server->get_channels();
-	std::cout << "test " << std::endl;
 	for (unsigned int i = 0; i < vchannels.size(); i++)
 	{
 		std::string ret;

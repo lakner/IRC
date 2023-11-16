@@ -263,11 +263,11 @@ void	Channel::kick(std::string nickname)
 	}
 }
 
-std::string Channel::add_mode_change(std::string& modes_set, char mode, bool *sign, bool mode_stat)
+std::string Channel::add_mode_change(char mode, bool *sign, bool mode_stat)
 {
 	std::string ret;
 
-	if (modes_set.empty() || mode_stat != sign)
+	if (mode_stat != *sign)
 	{
 		if (mode_stat == 0)
 			ret = "-";
@@ -279,27 +279,25 @@ std::string Channel::add_mode_change(std::string& modes_set, char mode, bool *si
 	return (ret);
 }
 
-void	Channel::set_mode(char mode, bool mode_stat, std::stringstream *param, Server *server)
+std::string	Channel::set_mode(char mode, bool mode_stat, std::stringstream *param, Server *server)
 {
 	std::string temp;
-	static std::string modes_set;
-	static bool	sign;
 
 	switch (mode)
 	{
 		case 'i':
 			if (_invite_only != mode_stat)
 			{
-				modes_set += add_mode_change(modes_set, mode, &sign, mode_stat);
 				_invite_only = mode_stat;
+				return ("i");
 			}
 			break ;
 
 		case 't':
 			if (_topic_change != mode_stat)
 			{
-				modes_set += add_mode_change(modes_set, mode, &sign, mode_stat);
 				_topic_change = mode_stat;
+				return ("t");
 			}
 			break ;
 
@@ -307,10 +305,14 @@ void	Channel::set_mode(char mode, bool mode_stat, std::stringstream *param, Serv
 			*param >> temp;
 			if (mode_stat && _password == temp)
 				break;
-			else if (mode_stat && _password.empty())
+			else if ((mode_stat && _password.empty()) || (!mode_stat && _password != temp))
+			{
 				_password = temp;
-			else
-				_password.clear(); 
+				
+			}
+			else if (!mode_stat && _password == temp)
+				_password.clear();
+
 			break ;
 
 		case 'o':
@@ -323,7 +325,7 @@ void	Channel::set_mode(char mode, bool mode_stat, std::stringstream *param, Serv
 					std::cout << "error" << std::endl;
 					//reply error
 			}
-			else 
+			else
 			{
 				if (is_operator(temp))
 					remove_operator(&server->get_client(temp));
@@ -342,7 +344,7 @@ void	Channel::set_mode(char mode, bool mode_stat, std::stringstream *param, Serv
 					if (limit > 9999)
 					{
 						std::cout << "to big" << limit << std::endl;
-						return ;
+						return ("");
 					}
 					_userlimit = limit;
     			    std::cout << "Converted integer: " << limit << std::endl;
@@ -355,8 +357,8 @@ void	Channel::set_mode(char mode, bool mode_stat, std::stringstream *param, Serv
 			else	
 				_userlimit = 9999;
 			break ;
-
 	}
+	return ("");
 }
 
 std::string Channel::get_modes()

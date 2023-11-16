@@ -92,7 +92,7 @@ void		Client::set_username(std::string name)
 {
 	_username = name;
 	_full_client_identifier =
-		_nickname + "!" + _username + "@" + _ipv4_addr;
+		_nickname + "!~" + _username + "@" + _ipv4_addr;
 }
 
 std::string		Client::get_full_client_identifier()

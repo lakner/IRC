@@ -25,7 +25,7 @@ class	Channel
 		std::map<std::string, Client*>&	get_users();
 		std::map<std::string, Client*>&	get_operators();
 		std::string						get_modes();
-		void							set_mode(char mode, bool mode_stat, std::stringstream *param, Server *server);
+		std::string						set_mode(char mode, bool mode_stat, std::stringstream *param, Server *server);
 		std::string						get_password();
 		std::string						get_topic();
 		void							set_topic( std::string new_topic );
@@ -50,7 +50,7 @@ class	Channel
 		void							notify_mode_changed(Client *client);
 		void							send_topic(Client *client);
 		void							send_user_list(Client *client);
-		std::string 					add_mode_change(std::string& modes_set, char mode, bool *sign, bool mode_stat);
+		std::string 					add_mode_change(char mode, bool *sign, bool mode_stat);
 };
 
 #endif
