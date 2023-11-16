@@ -8,15 +8,6 @@ class	Client;
 class	Server;
 class	Message;
 
-typedef	struct s_mode
-{
-	int	i;
-	int	t;
-	int	k;
-	int	o;
-	int	l;
-}			Mode;
-
 class	Channel
 {
 	public:
@@ -33,7 +24,8 @@ class	Channel
 		std::string						get_channel_name( void );
 		std::map<std::string, Client*>&	get_users();
 		std::map<std::string, Client*>&	get_operators();
-		Mode							get_mode();
+		std::string						get_modes();
+		void							set_mode(char mode, bool mode_stat, std::stringstream *param, Server *server);
 		std::string						get_password();
 		std::string						get_topic();
 		void							set_topic( std::string new_topic );
@@ -41,12 +33,15 @@ class	Channel
 		bool							allowed_to_set_topic(std::string nickname);
 		bool							allowed_to_invite_kick(std::string nickname);
 		void							kick(std::string nickname);
-		
+
 	private:
 		std::string						_channel_name;
 		std::string						_password;
+		int								_userlimit;
+		std::string						_mode;
 		std::string						_topic;
-		Mode							_mode;
+		bool							_invite_only;
+		bool							_topic_change;
 		std::map<std::string, Client*>	_client_list;
 		std::map<std::string, Client*>	_operator_list;
 		void							notify_user_joined(Client *client);

@@ -73,6 +73,8 @@ int	Message::parse()
 		_command = "TOPIC";
 	else if (_raw_content.rfind("WHO", 0) == 0)
 		_command = "WHO";
+	else if (_raw_content.rfind("MODE", 0) == 0)
+		_command = "MODE";
 	else
 	{
 		std::stringstream ss(_raw_content);

@@ -3,29 +3,15 @@
 #include "Message.hpp"
 #include "Numeric.hpp"
 
-Channel::Channel(): _channel_name(""), _password("")
+Channel::Channel(): _channel_name(""), _password(""), _userlimit(9999), _invite_only(false), _topic_change(false)
 {
-	Mode	initial_mode;
 
-	initial_mode.i = 0;
-	initial_mode.k = 0;
-	initial_mode.l = 0;
-	initial_mode.o = 0;
-	initial_mode.t = 0;
-	_mode = initial_mode;
 }
 
 Channel::Channel(std::string name, std::string pass)
-	:_channel_name(name), _password(pass)
+	:_channel_name(name), _password(pass) , _userlimit(9999), _invite_only(false), _topic_change(false)
 {
-	Mode	initial_mode;
 
-	initial_mode.i = 0;
-	initial_mode.k = 0;
-	initial_mode.l = 0;
-	initial_mode.o = 0;
-	initial_mode.t = 0;
-	_mode = initial_mode;
 }
 
 Channel::~Channel()
@@ -200,7 +186,7 @@ bool	Channel::client_in_channel(Client& client)
 
 bool	Channel::allowed_to_set_topic(std::string nickname)
 {
-	if (!_mode.t)
+	if (!_topic_change)
 		return (true);
 
 	if (_operator_list.find(nickname) != _operator_list.end())
@@ -224,8 +210,6 @@ bool	Channel::is_operator(std::string nickname)
 
 bool	Channel::allowed_to_invite_kick(std::string nickname)
 {
-	if (get_mode().o)
-		return (true);
 	return(is_operator(nickname));
 }
 
@@ -244,10 +228,6 @@ std::map<std::string, Client*>&	Channel::get_operators( void )
 	return (_operator_list);
 }
 
-Mode Channel::get_mode( void )
-{
-	return (_mode);
-}
 
 std::string	Channel::get_password( void )
 {
@@ -281,4 +261,92 @@ void	Channel::kick(std::string nickname)
 			remove_operator(cl);
 		}
 	}
+}
+
+void	Channel::set_mode(char mode, bool mode_stat, std::stringstream *param, Server *server)
+{
+	std::string temp;
+
+	switch (mode)
+	{
+		case 'i':
+			_invite_only = mode_stat;
+			break ;
+
+		case 't':
+			_topic_change = mode_stat;
+			break ;
+
+		case 'k':
+			if (mode_stat)
+				*param >> _password;
+			else
+				_password.clear(); 
+			break ;
+
+		case 'o':
+			if (mode_stat)
+			{
+				*param >> temp;
+				if (!is_operator(temp))
+					add_operator(&server->get_client(temp));
+				else
+					std::cout << "error" << std::endl;
+					//reply error
+			}
+			else 
+			{
+				if (is_operator(temp))
+					remove_operator(&server->get_client(temp));
+				else
+					std::cout << "error" << std::endl;
+					//reply error
+			}
+			break ;
+
+		case 'l': //maybe add unlimited with -l??
+			if (mode_stat)
+			{
+				*param >> temp;
+				try {
+	    	    	int limit = std::stoi(temp);
+					if (limit > 9999)
+					{
+						std::cout << "to big" << limit << std::endl;
+						return ;
+					}
+					_userlimit = limit;
+    			    std::cout << "Converted integer: " << limit << std::endl;
+   			 	} catch (const std::invalid_argument& e) {
+        			std::cerr << "Invalid argument: " << e.what() << std::endl; //use replycodes
+    			} catch (const std::out_of_range& e) {
+        			std::cerr << "Out of range error: " << e.what() << std::endl;
+    			}
+			}
+			else	
+				_userlimit = 9999;
+			break ;
+		
+		default:
+			std::string modes;
+			modes = get_modes();
+			modes += "+";
+			std::cout << "MODE: " + modes << std::endl;
+			
+	}
+}
+
+std::string Channel::get_modes()
+{
+	std::string modes;
+
+	if (_invite_only)
+		modes += "i";
+	if (!_password.empty())
+		modes += "k";
+	if (_userlimit != 9999)
+		modes += "l";
+	if (_topic_change)
+		modes += "l";
+	return (modes);
 }

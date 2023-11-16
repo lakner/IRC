@@ -45,7 +45,38 @@ int	Commands::execute(Server *server, Message *msg)
 		return(exec_topic(server, msg));
 	else if (command == "WHO")
 		return(exec_who(server, msg));
+	else if (command == "MODE")
+		return (exec_mode(server, msg));
 	return (-1);
+}
+
+int Commands::exec_mode(Server *server, Message *msg)
+{
+	std::string			channel_name, modes; //, param1, param2, param3;
+	std::stringstream	ss(msg->get_payload());
+	bool				mode_state = 1; // 1(+/set) 0(-/unset)
+
+	ss >> channel_name >> modes; // >> param1 >> param2 >> param3;
+	if (modes.empty())
+	{
+		std::cout << "MODE: " + server->get_channel(channel_name).get_modes() << std::endl;
+		return (0);
+	}
+	for (std::string::size_type i = 0; i < modes.length(); i++)
+	{
+		if (modes[i] == '+')
+		{
+			mode_state = 1;
+			continue ;
+		}
+		if ( modes[i] == '-')
+		{
+			mode_state = 0;
+			continue ;
+		}
+		server->get_channel(channel_name).set_mode(modes[i], mode_state, &ss, server);
+	}
+	return (0);
 }
 
 int Commands::exec_who(Server *server, Message *msg)
@@ -386,6 +417,7 @@ int Commands::exec_join(Server *server, Message *msg)
 		}
 		vchannels.push_back(ch);
 	}
+	std::cout << "test " << std::endl;
 	std::stringstream passstr(s_passwords);
 	while (passstr.good())
 	{
@@ -395,7 +427,7 @@ int Commands::exec_join(Server *server, Message *msg)
 	}
 
 	std::map<std::string, Channel>& channels = server->get_channels();
-	
+	std::cout << "test " << std::endl;
 	for (unsigned int i = 0; i < vchannels.size(); i++)
 	{
 		std::string ret;
@@ -423,7 +455,7 @@ int Commands::exec_join(Server *server, Message *msg)
 				error += ":Cannot join channel (invite only)";
 			if (ret == ERR_CHANNELISFULL)
 				error += ":Cannot join channel (channel is full)";
-			msg->send_from_server(msg->get_sender(), ret + " " + msg->get_sender()->get_nickname() + " " + vchannels[i] + " ");
+			msg->send_from_server(msg->get_sender(), ret + " " + msg->get_sender()->get_nickname() + " " + vchannels[i] + " " + error);
 		}
 		else
 		{
