@@ -6,6 +6,7 @@
 #include <vector>
 #include <algorithm>
 
+using std::string;
 
 Commands::Commands()
 {
@@ -150,18 +151,18 @@ int	Commands::exec_topic(Server *server, Message *msg)
 	// channel needs to exist
 	else if(!server->channel_exists(channel_name))
 	{
-		response += std::string(HOSTNAME) + " " + ERR_NOSUCHCHANNEL;
+		response += string(HOSTNAME) + " " + ERR_NOSUCHCHANNEL;
 		return (msg->send_to(msg->get_sender(), response));
 	}
 
 	Channel& ch = server->get_channel(channel_name);
 	if (!ch.client_in_channel(client))		// client needs to be in channel
-		response += std::string(HOSTNAME) + " " + std::string(ERR_NOTONCHANNEL) + " " + ch.get_channel_name() + " :You're not on that channel";
+		response += string(HOSTNAME) + " " + string(ERR_NOTONCHANNEL) + " " + ch.get_channel_name() + " :You're not on that channel";
 	else if (!ch.allowed_to_set_topic(client.get_nickname()))
-		response += std::string(HOSTNAME) + " " + std::string(ERR_CHANOPRIVSNEEDED) + " " + ch.get_channel_name() + " :You're not a channel operator";
+		response += string(HOSTNAME) + " " + string(ERR_CHANOPRIVSNEEDED) + " " + ch.get_channel_name() + " :You're not a channel operator";
 	else if (new_channel_topic.empty())		// no second parameter or it does not start with ':' - return the topic
 	{	
-		response += std::string(HOSTNAME) + " " + std::string(RPL_TOPIC) + " " + msg->get_sender()->get_nickname() + " " ;
+		response += string(HOSTNAME) + " " + string(RPL_TOPIC) + " " + msg->get_sender()->get_nickname() + " " ;
 		response += ch.get_channel_name();
 		if (ch.get_topic() == "")
 			response +=" :No topic is set."; 
@@ -327,18 +328,18 @@ int Commands::exec_pass(Server *server, Message *msg)
 	return 1;
 }
 
-bool is_valid_channel_name(std::string name)
+bool Commands::is_valid_channel_name(std::string name)
 {
 	if (name.length() > 50 || !name.length())
 		return false;
 	if (std::string("&#+!").find(name[0]) != std::string::npos)
 		return false;
-	if (name.find_first_of(" \0x007,") != std::string::npos)
+	if (name.find_first_of(" \a,\r\n") != std::string::npos)
 		return false;
 	return true;
 }
 
-bool is_valid_nickname(std::string name)
+bool Commands::is_valid_nickname(std::string name)
 {
 	if (name.length() > 32 || !name.length())
 		return false;
@@ -353,33 +354,37 @@ bool is_valid_nickname(std::string name)
 	return true;
 }
 
+bool is_valid_username(string name)
+{
+	if (name.length() > 32 || !name.length())
+		return false;
+	if (name.find_first_of("\r\n @") != string::npos)
+		return false;
+	return true;
+}
+
 int Commands::exec_nick(Message *msg, Server *serv)
 {
-	std::string n_name = msg->get_payload();
+	string		n_name = msg->get_payload();
+	string		response;
+	string 		sender = msg->get_sender()->get_nickname();
 	std::cout << "NICK: '" << n_name << "'" << std::endl;
+
 	if(!is_valid_nickname(n_name))
-	{
-		msg->send_to(msg->get_sender(), ERR_ERRONEUSNICKNAME);
-		return (atoi(ERR_ERRONEUSNICKNAME));
-	}
+		response = " " + string(ERR_ERRONEUSNICKNAME) + " " + sender + " " + n_name + " :Erronous nickname";
 	else if (serv->nickname_exists(n_name))
-	{
-		msg->send_to(msg->get_sender(), std::string(HOSTNAME) + ERR_NICKNAMEINUSE + " " + msg->get_sender()->get_nickname() + " " + n_name + " :Nickname is already in use.");
-		return (atoi(ERR_NICKNAMEINUSE));
-	}
+		response = " " + string(ERR_NICKNAMEINUSE) + " " + sender + " " + n_name + " :Nickname is already in use.";
 	else if (n_name.empty())
-	{
-		msg->send_to(msg->get_sender(), std::string(HOSTNAME) + ERR_NONICKNAMEGIVEN + " " + msg->get_sender()->get_nickname() + " :No nickname given");
-		return (atoi(ERR_NONICKNAMEGIVEN));
-	}
+		response = " " + string(ERR_NONICKNAMEGIVEN) + " " + sender + " :No nickname given";
 	else
 	{
-		std::string to_send = ":" + msg->get_sender()->get_full_client_identifier() + " NICK :" + n_name;
-		msg->send_to(msg->get_sender(), to_send);
+		response = ":" + msg->get_sender()->get_full_client_identifier() + " NICK :" + n_name;
+		msg->send_to(msg->get_sender(), response);
 		msg->get_sender()->set_nickname(n_name);
 		return 0;
 	}
-	return 1;
+	msg->send_from_server(msg->get_sender(), response);
+	return 0;
 }
 
 const char* Commands::UsernameAlreadyExists::what() const throw()
@@ -393,11 +398,11 @@ int Commands::exec_user(Message *msg)
 		return -1;
 	if (!msg->get_sender()->get_username().empty())
 	{
-		msg->send_to(msg->get_sender(), std::string(HOSTNAME) + std::string(ERR_ALREADYREGISTRED) + " " + msg->get_sender()->get_nickname() + " :You may not reregister");
+		msg->send_to(msg->get_sender(), string(HOSTNAME) + string(ERR_ALREADYREGISTRED) + " " + msg->get_sender()->get_nickname() + " :You may not reregister");
 		return (atoi(ERR_ALREADYREGISTRED));
 	}
 	std::stringstream ss (msg->get_payload());
-	std::string username, unused, realname;
+	string username, unused, realname;
 	Client *client = msg->get_sender();
 
 	ss >> username >> unused >> unused >> realname;
@@ -405,7 +410,7 @@ int Commands::exec_user(Message *msg)
 	client->set_username(username);
 
 	msg->get_sender()->authenticate(2);
-	std::string response = ":127.0.0.1 " + std::string(RPL_WELCOME) + " " + msg->get_sender()->get_nickname();
+	string response = ":127.0.0.1 " + string(RPL_WELCOME) + " " + msg->get_sender()->get_nickname();
 	response += " :Welcome to the Internet Relay Network ";
 	response += client->get_full_client_identifier();
 	msg->send_to(client, response);
@@ -421,8 +426,9 @@ int Commands::exec_join(Server *server, Message *msg)
 {
 	std::cout << "JOIN: Payload is: " << msg->get_payload() << std::endl;
 	
-	std::stringstream ss(msg->get_payload());
-	std::string s_channels, s_passwords;
+	std::stringstream	ss(msg->get_payload());
+	std::string 		s_channels, s_passwords;
+	std::string 		error;
 
 	ss >> s_channels >> s_passwords;
 	std::cout << "JOIN: channels: " << s_channels << "\n\tPasswords are: " << s_passwords << std::endl;
@@ -434,10 +440,10 @@ int Commands::exec_join(Server *server, Message *msg)
 	{
 		std::string ch;
 		std::getline(channelstr, ch, ',');
-		if (!(ch.rfind("#", 0) == 0))
+		if (!is_valid_channel_name(ch))
 		{
-			msg->send_to(msg->get_sender(), "Channel names must start with '#'");
-			return -1;
+			msg->send_from_server(msg->get_sender(), " " + std::string(ERR_NOSUCHCHANNEL) + " " + ch + " :No such channel");
+			return 0;
 		}
 		vchannels.push_back(ch);
 	}
@@ -472,7 +478,7 @@ int Commands::exec_join(Server *server, Message *msg)
 
 		if (!ret.empty())
 		{
-			std::string error = ret + " " + msg->get_sender()->get_nickname() + " " + vchannels[i] + " ";
+			error = ret + " " + msg->get_sender()->get_nickname() + " " + vchannels[i] + " ";
 			if (ret == ERR_BADCHANNELKEY)
 				error += ":Cannot join channel (incorrect channel key)";
 			if (ret == ERR_INVITEONLYCHAN)
