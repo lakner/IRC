@@ -327,18 +327,36 @@ int Commands::exec_pass(Server *server, Message *msg)
 	return 1;
 }
 
-//need to implement 
+bool is_valid_channel_name(std::string name)
+{
+	if (name.length() > 50 || !name.length())
+		return false;
+	if (std::string("&#+!").find(name[0]) != std::string::npos)
+		return false;
+	if (name.find_first_of(" \0x007,") != std::string::npos)
+		return false;
+	return true;
+}
+
 bool is_valid_nickname(std::string name)
 {
-	// check for valid Characters 
-	if (name == name)
-		return true;
+	if (name.length() > 32 || !name.length())
+		return false;
+	if (isdigit(name[0]))
+		return false;
+	std::string valid = "<-[]\\^{}";
+	valid += "abdcefghijklmnopqrstuvwxyz";
+	valid += "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+	valid += "0123456789";
+	if (name.find_first_not_of(valid) != std::string::npos)
+		return false;
 	return true;
 }
 
 int Commands::exec_nick(Message *msg, Server *serv)
 {
 	std::string n_name = msg->get_payload();
+	std::cout << "NICK: '" << n_name << "'" << std::endl;
 	if(!is_valid_nickname(n_name))
 	{
 		msg->send_to(msg->get_sender(), ERR_ERRONEUSNICKNAME);
