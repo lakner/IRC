@@ -263,23 +263,52 @@ void	Channel::kick(std::string nickname)
 	}
 }
 
+std::string Channel::add_mode_change(std::string& modes_set, char mode, bool *sign, bool mode_stat)
+{
+	std::string ret;
+
+	if (modes_set.empty() || mode_stat != sign)
+	{
+		if (mode_stat == 0)
+			ret = "-";
+		else
+			ret = "+";
+		*sign = mode_stat;
+	}
+	ret += mode;
+	return (ret);
+}
+
 void	Channel::set_mode(char mode, bool mode_stat, std::stringstream *param, Server *server)
 {
 	std::string temp;
+	static std::string modes_set;
+	static bool	sign;
 
 	switch (mode)
 	{
 		case 'i':
-			_invite_only = mode_stat;
+			if (_invite_only != mode_stat)
+			{
+				modes_set += add_mode_change(modes_set, mode, &sign, mode_stat);
+				_invite_only = mode_stat;
+			}
 			break ;
 
 		case 't':
-			_topic_change = mode_stat;
+			if (_topic_change != mode_stat)
+			{
+				modes_set += add_mode_change(modes_set, mode, &sign, mode_stat);
+				_topic_change = mode_stat;
+			}
 			break ;
 
 		case 'k':
-			if (mode_stat)
-				*param >> _password;
+			*param >> temp;
+			if (mode_stat && _password == temp)
+				break;
+			else if (mode_stat && _password.empty())
+				_password = temp;
 			else
 				_password.clear(); 
 			break ;
@@ -326,19 +355,13 @@ void	Channel::set_mode(char mode, bool mode_stat, std::stringstream *param, Serv
 			else	
 				_userlimit = 9999;
 			break ;
-		
-		default:
-			std::string modes;
-			modes = get_modes();
-			modes += "+";
-			std::cout << "MODE: " + modes << std::endl;
-			
+
 	}
 }
 
 std::string Channel::get_modes()
 {
-	std::string modes;
+	std::string modes = "+";
 
 	if (_invite_only)
 		modes += "i";
@@ -347,6 +370,7 @@ std::string Channel::get_modes()
 	if (_userlimit != 9999)
 		modes += "l";
 	if (_topic_change)
-		modes += "l";
+		modes += "t";
+	std::cout << modes << std::endl;
 	return (modes);
 }

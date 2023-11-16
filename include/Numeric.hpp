@@ -27,6 +27,10 @@
 #define ERR_CHANOPRIVSNEEDED "482"
 
 
+#define RPL_CHANNELMODEIS "324"
+#define ERR_NOSUCHNICK "401"
+
+
 #define HOSTNAME ":127.0.0.1 "
 
 #endif

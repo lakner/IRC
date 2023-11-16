@@ -55,11 +55,17 @@ int Commands::exec_mode(Server *server, Message *msg)
 	std::string			channel_name, modes; //, param1, param2, param3;
 	std::stringstream	ss(msg->get_payload());
 	bool				mode_state = 1; // 1(+/set) 0(-/unset)
+	Client				*sender = msg->get_sender();
 
 	ss >> channel_name >> modes; // >> param1 >> param2 >> param3;
+	if (channel_name[0] != '#')
+	{
+		msg->send_from_server(sender, std::string(ERR_NOSUCHNICK) + " " + sender->get_nickname() + " " + channel_name + " :No such nick");
+		return (-1);
+	}
 	if (modes.empty())
 	{
-		std::cout << "MODE: " + server->get_channel(channel_name).get_modes() << std::endl;
+		msg->send_from_server(sender, std::string(RPL_CHANNELMODEIS) + " " + sender->get_nickname() + " " + channel_name + " :" + server->get_channel(channel_name).get_modes());
 		return (0);
 	}
 	for (std::string::size_type i = 0; i < modes.length(); i++)

@@ -50,6 +50,7 @@ class	Channel
 		void							notify_mode_changed(Client *client);
 		void							send_topic(Client *client);
 		void							send_user_list(Client *client);
+		std::string 					add_mode_change(std::string& modes_set, char mode, bool *sign, bool mode_stat);
 };
 
 #endif
