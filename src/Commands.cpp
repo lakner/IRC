@@ -341,16 +341,13 @@ int Commands::exec_pass(Server *server, Message *msg)
 //not working
 bool Commands::is_valid_channel_name(std::string name)
 {
-	if (!name.empty())
-		return true;
+	if (name.length() > 50 || !name.length())
+		return false;
+	if (std::string("&#+!").find(name[0]) != std::string::npos)
+		return false;
+	if (name.find_first_of(" \a,\r\n") != std::string::npos)
+		return false;
 	return true;
-	// if (name.length() > 50 || !name.length())
-	// 	return false;
-	// if (std::string("&#+!").find(name[0]) != std::string::npos)
-	// 	return false;
-	// if (name.find_first_of(" \a,\r\n") != std::string::npos)
-	// 	return false;
-	// return true;
 }
 
 bool Commands::is_valid_nickname(std::string name)
