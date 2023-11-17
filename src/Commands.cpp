@@ -441,8 +441,8 @@ int Commands::exec_join(Server *server, Message *msg)
 	std::cout << "JOIN: Payload is: " << msg->get_payload() << std::endl;
 	
 	std::stringstream	ss(msg->get_payload());
-	std::string 		s_channels, s_passwords;
-	std::string 		error;
+	string 				s_channels, s_passwords;
+	string 				error;
 
 	ss >> s_channels >> s_passwords;
 	std::cout << "JOIN: channels: " << s_channels << "\n\tPasswords are: " << s_passwords << std::endl;
@@ -452,7 +452,7 @@ int Commands::exec_join(Server *server, Message *msg)
 	std::stringstream channelstr(s_channels);
 	while (channelstr.good())
 	{
-		std::string ch;
+		string ch;
 		std::getline(channelstr, ch, ',');
 		if (!is_valid_channel_name(ch))
 		{
@@ -464,15 +464,15 @@ int Commands::exec_join(Server *server, Message *msg)
 	std::stringstream passstr(s_passwords);
 	while (passstr.good())
 	{
-		std::string pass;
+		string pass;
 		std::getline(passstr, pass, ',');
 		vpasswords.push_back(pass);
 	}
 
-	std::map<std::string, Channel>& channels = server->get_channels();
+	std::map<string, Channel>& channels = server->get_channels();
 	for (unsigned int i = 0; i < vchannels.size(); i++)
 	{
-		std::string ret;
+		string ret;
 		// new channel
 		if (channels.find(vchannels[i]) == channels.end())
 		{
