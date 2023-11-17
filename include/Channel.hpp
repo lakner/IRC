@@ -25,9 +25,10 @@ class	Channel
 		std::map<std::string, Client*>&	get_users();
 		std::map<std::string, Client*>&	get_operators();
 		std::string						get_modes();
-		std::string						set_mode(char mode, bool mode_stat, std::stringstream *param, Server *server);
+		std::string						set_mode(char mode, bool mode_stat, std::stringstream *param, Server *server, Message *msg);
 		std::string						get_password();
 		std::string						get_topic();
+		bool							get_invite_only();
 		void							set_topic( std::string new_topic );
 		bool							is_operator(std::string nickname);
 		bool							allowed_to_set_topic(std::string nickname);
@@ -35,6 +36,7 @@ class	Channel
 		void							kick(std::string nickname);
 
 	private:
+		int								_channelusers;
 		std::string						_channel_name;
 		std::string						_password;
 		int								_userlimit;
@@ -50,7 +52,7 @@ class	Channel
 		void							notify_mode_changed(Client *client);
 		void							send_topic(Client *client);
 		void							send_user_list(Client *client);
-		std::string 					add_mode_change(char mode, bool *sign, bool mode_stat);
+		// std::string 					add_mode_change(char mode, bool *sign, bool mode_stat);
 };
 
 #endif

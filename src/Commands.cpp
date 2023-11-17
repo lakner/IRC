@@ -89,9 +89,8 @@ int Commands::exec_mode(Server *server, Message *msg)
 			mode_state = 0;
 			continue ;
 		}
-		modes_set += server->get_channel(channel_name).set_mode(modes[i], mode_state, &ss, server);
+		modes_set += server->get_channel(channel_name).set_mode(modes[i], mode_state, &ss, server, msg);
 	}
-	//implement message for combination of password and modes
 	msg->send_to(sender, ":" + sender->get_full_client_identifier() + " MODE " + channel_name + " :" + modes_set);
 	return (0);
 }
@@ -480,10 +479,12 @@ int Commands::exec_join(Server *server, Message *msg)
 		}
 
 		// join the channel
-		if (i < vpasswords.size())
+		if (i < vpasswords.size() && !channels[vchannels[i]].get_invite_only())
 			ret = channels[vchannels[i]].add_user(msg->get_sender(), vpasswords[i]);
-		else
+		else if (!channels[vchannels[i]].get_invite_only())
 			ret = channels[vchannels[i]].add_user(msg->get_sender(), "");
+		else
+			ret = ERR_INVITEONLYCHAN;
 
 		if (!ret.empty())
 		{

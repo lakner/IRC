@@ -28,7 +28,10 @@ std::string	Channel::add_user(Client *client, std::string password)
 		if (_client_list.empty())
 			add_operator(client);
 		//_client_list.insert(std::pair<std::string, Client*>(client->get_nickname(), client));
+		if (_channelusers == _userlimit)
+			return (ERR_CHANNELISFULL);
 		_client_list[client->get_nickname()] = client;
+		_channelusers++;
 		notify_user_joined(client);
 		send_topic(client);
 		send_user_list(client);
@@ -244,6 +247,10 @@ void	Channel::set_topic( std::string new_topic )
 	this->_topic = new_topic;
 }
 
+bool	Channel::get_invite_only()
+{
+	return (_invite_only);
+}
 //kick a user from a channel
 void	Channel::kick(std::string nickname)
 {
@@ -263,26 +270,27 @@ void	Channel::kick(std::string nickname)
 	}
 }
 
-std::string Channel::add_mode_change(char mode, bool *sign, bool mode_stat)
-{
-	std::string ret;
+// std::string Channel::add_mode_change(char mode, bool *sign, bool mode_stat)
+// {
+	
+// 	std::string ret;
 
-	if (mode_stat != *sign)
-	{
-		if (mode_stat == 0)
-			ret = "-";
-		else
-			ret = "+";
-		*sign = mode_stat;
-	}
-	ret += mode;
-	return (ret);
-}
+// 	if (mode_stat != *sign)
+// 	{
+// 		if (mode_stat == 0)
+// 			ret = "-";
+// 		else
+// 			ret = "+";
+// 		*sign = mode_stat;
+// 	}
+// 	ret += mode;
+// 	return (ret);
+// }
 
-std::string	Channel::set_mode(char mode, bool mode_stat, std::stringstream *param, Server *server)
+std::string	Channel::set_mode(char mode, bool mode_stat, std::stringstream *param, Server *server, Message *msg)
 {
 	std::string temp;
-
+	Client		*sender = msg->get_sender();
 	switch (mode)
 	{
 		case 'i':
@@ -308,11 +316,13 @@ std::string	Channel::set_mode(char mode, bool mode_stat, std::stringstream *para
 			else if ((mode_stat && _password.empty()) || (!mode_stat && _password != temp))
 			{
 				_password = temp;
-				
+				msg->send_to(sender, ":" + sender->get_full_client_identifier() + " MODE " + get_channel_name() + " +k :" + _password);
 			}
 			else if (!mode_stat && _password == temp)
+			{
 				_password.clear();
-
+				msg->send_to(sender, ":" + sender->get_full_client_identifier() + " MODE " + get_channel_name() + " -k :" + _password);
+			}
 			break ;
 
 		case 'o':
@@ -342,20 +352,22 @@ std::string	Channel::set_mode(char mode, bool mode_stat, std::stringstream *para
 				try {
 	    	    	int limit = std::stoi(temp);
 					if (limit > 9999)
-					{
-						std::cout << "to big" << limit << std::endl;
-						return ("");
-					}
-					_userlimit = limit;
-    			    std::cout << "Converted integer: " << limit << std::endl;
+						_userlimit = 9999;
+					else
+						_userlimit = limit;
+					msg->send_to(sender, ":" + sender->get_full_client_identifier() + " MODE " + get_channel_name() + " +l :" + std::to_string(_userlimit));
    			 	} catch (const std::invalid_argument& e) {
-        			std::cerr << "Invalid argument: " << e.what() << std::endl; //use replycodes
+        			std::cerr << "Invalid argument: " << e.what() << std::endl; //no code for this case
     			} catch (const std::out_of_range& e) {
-        			std::cerr << "Out of range error: " << e.what() << std::endl;
+					_userlimit = 9999;
+        			msg->send_to(sender, ":" + sender->get_full_client_identifier() + " MODE " + get_channel_name() + " +l :" + std::to_string(_userlimit));
     			}
 			}
-			else	
+			else
+			{
 				_userlimit = 9999;
+        		msg->send_to(sender, ":" + sender->get_full_client_identifier() + " MODE " + get_channel_name() + " :-l");
+			}
 			break ;
 	}
 	return ("");
