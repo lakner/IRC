@@ -343,7 +343,7 @@ bool Commands::is_valid_channel_name(std::string name)
 {
 	if (name.length() > 50 || !name.length())
 		return false;
-	if (std::string("&#+!").find(name[0]) != std::string::npos)
+	if (std::string("&#+!").find(name[0]) == std::string::npos)
 		return false;
 	if (name.find_first_of(" \a,\r\n") != std::string::npos)
 		return false;
