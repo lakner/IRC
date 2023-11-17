@@ -359,7 +359,7 @@ bool Commands::is_valid_nickname(std::string name)
 		return false;
 	if (isdigit(name[0]))
 		return false;
-	std::string valid = "<-[]\\^{}";
+	string valid = "<-[]\\^{}_";
 	valid += "abdcefghijklmnopqrstuvwxyz";
 	valid += "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 	valid += "0123456789";
