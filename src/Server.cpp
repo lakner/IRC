@@ -1,5 +1,7 @@
 #include "Server.hpp"
 
+using std::string;
+
 Server::~Server()
 {
 }

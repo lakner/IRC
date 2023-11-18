@@ -251,7 +251,8 @@ bool	Channel::get_invite_only()
 {
 	return (_invite_only);
 }
-//kick a user from a channel
+
+
 void	Channel::kick(std::string nickname)
 {
 	std::map<std::string, Client*>::iterator it = _client_list.begin();
@@ -262,8 +263,6 @@ void	Channel::kick(std::string nickname)
 
 		if (cl->get_nickname() == nickname)
 		{
-			std::string msg;
-			msg = 
 			remove_user(cl);
 			remove_operator(cl);
 		}
