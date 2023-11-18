@@ -104,7 +104,7 @@ struct addrinfo*	Server::create_listener_socket(struct addrinfo* addrinfo)
 		
 		int send_buffer_size;
 		socklen_t optlen = sizeof(send_buffer_size);
-    	getsockopt(this->_server_sock_fd, SOL_SOCKET, SO_SNDBUF, &send_buffer_size, &optlen);
+		getsockopt(this->_server_sock_fd, SOL_SOCKET, SO_SNDBUF, &send_buffer_size, &optlen);
 		std::cout << "OPTLEN send_buffer_size = " << send_buffer_size << std::endl;
 		
 		if (bind(this->_server_sock_fd, p->ai_addr, p->ai_addrlen) < 0)
@@ -165,27 +165,24 @@ void	Server::new_client_connection()
 {
 	struct pollfd	pfd;
 	struct sockaddr client_addr;
-	socklen_t		client_addr_len;
-	int				new_client_socket;
+	socklen_t		client_addr_len = sizeof(client_addr);
+	int				client_sock;
 
 	std::cout << "Handling connection from a new client" << std::endl;
 	std::memset(&pfd, 0, sizeof(pfd));
-	client_addr_len = sizeof(client_addr);
-	new_client_socket = accept(this->_server_sock_fd,
-				&client_addr,
-				&client_addr_len);
-	std::cout << "NEW CLIENT SOCKET: " << new_client_socket << std::endl;
-	if (new_client_socket == -1)
+	client_sock = accept(this->_server_sock_fd, &client_addr, &client_addr_len);
+	if (client_sock == -1)
 	{
 		std::cout << "accept() failed, terminating" << std::endl;
 		throw "Error with accept().";
 	}
 	else
 	{
-		fcntl(new_client_socket, F_SETFL, O_NONBLOCK);
-		add_client(new_client_socket, read_client_ipv4_address(client_addr));
-
-		pfd.fd = new_client_socket;
+		fcntl(client_sock, F_SETFL, O_NONBLOCK);
+		std::string client_ip = read_client_ipv4_addr(client_addr);
+		std::string server_ip = read_server_ipv4_addr(client_sock);
+		add_client(client_sock, client_ip, server_ip);
+		pfd.fd = client_sock;
 		pfd.events = POLLIN | POLLOUT;
 		pfd.revents = 0;
 		this->_pollfds.push_back(pfd);
@@ -193,6 +190,33 @@ void	Server::new_client_connection()
 	}
 }
 
+string	Server::read_server_ipv4_addr(int socket_fd)
+{
+	// char server_ip[16];
+	// struct sockaddr_in sock;
+	// socklen_t len = sizeof(sock);
+	// getsockname(socket_fd, (struct sockaddr *) &sock, &len);
+	// inet_ntop(AF_INET, &sock.sin_addr, server_ip, sizeof(server_ip));
+	// std::cout << "Server ip address: " << server_ip << std::endl;
+	// return string(server_ip);
+
+	(void) socket_fd;
+	return "server ip";
+
+}
+
+string	Server::read_client_ipv4_addr(struct sockaddr& client_addr)
+{
+	// struct in_addr ip_addr = ((struct sockaddr_in*) &client_addr)->sin_addr;
+	// char ip_str[INET_ADDRSTRLEN];
+
+	// inet_ntop(AF_INET, &ip_addr, ip_str, INET_ADDRSTRLEN);
+	// std::cout << "New client IP address: " << ip_str << std::endl;
+	// return string(ip_str);
+
+	(void) client_addr;
+	return (string("x.x.x.x"));
+}
 
 int	Server::read_from_existing_client(int client_fd)
 {
@@ -232,25 +256,16 @@ int	Server::read_from_existing_client(int client_fd)
 }
 
 
-void	Server::add_client(int client_fd, std::string ip_v4_addr)
+void	Server::add_client	(int client_fd, 
+							std::string client_ip_v4_addr,
+							std::string server_ipv4_addr)
 {
-	Client		new_client(client_fd, ip_v4_addr);
-
-	//std::cout << "ADD CLIENT: " << new_client.get_client_fd() << std::endl;
+	Client		new_client(client_fd, client_ip_v4_addr, server_ipv4_addr);
 	_clients.insert(std::pair<int, Client>(client_fd, new_client));
 }
 
 
-std::string	Server::read_client_ipv4_address(struct sockaddr& client_addr)
-{
-	struct sockaddr_in *ip_v4_addr = (struct sockaddr_in*) &client_addr;
-	struct in_addr ip_addr = ip_v4_addr->sin_addr;
-	char ip_str[INET_ADDRSTRLEN];
 
-	inet_ntop(AF_INET, &ip_addr, ip_str, INET_ADDRSTRLEN);
-	std::cout << "New client IP address: " << ip_str << std::endl;
-	return(std::string(ip_str));
-}
 
 
 void Server::add_channel(std::string name, std::string pass)

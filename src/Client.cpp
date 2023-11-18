@@ -2,11 +2,18 @@
 #include "Commands.hpp"
 #include <iostream>
 
-Client::Client(int client_fd, std::string ipv4_addr) :
+using std::string;
+
+Client::Client(int client_fd, string client_ipv4_addr, string server_ipv4_addr) :
 		_client_fd(client_fd), 
-		_ipv4_addr(ipv4_addr),
+		_client_ipv4_addr(client_ipv4_addr),
+		_server_ipv4_addr(server_ipv4_addr),
+		_server_string(": " + _server_ipv4_addr + " "),
 		_nickname(""),
-		_authenticated(0) { std::cout << _client_fd << std::endl;}
+		_authenticated(0) 
+{
+	// std::cout << "New client: " << _client_fd << " ip_addr: " << ipv4_addr << std::endl;
+}
 
 Client::~Client()
 {
@@ -80,7 +87,7 @@ void		Client::set_nickname(std::string name)
 {
 	_nickname = name;
 	_full_client_identifier =
-		_nickname + "!" + _username + "@" + _ipv4_addr;
+		_nickname + "!" + _username + "@" + _client_ipv4_addr;
 }
 
 std::string		Client::get_username()
@@ -92,7 +99,7 @@ void		Client::set_username(std::string name)
 {
 	_username = name;
 	_full_client_identifier =
-		_nickname + "!~" + _username + "@" + _ipv4_addr;
+		_nickname + "!~" + _username + "@" + _client_ipv4_addr;
 }
 
 std::string		Client::get_full_client_identifier()
@@ -111,4 +118,9 @@ int	Client::send_all_in_write_buffer()
 	else
 		clear_write_buffer();
 	return 0;
+}
+
+string Client::get_server_string()
+{
+	return(_server_string);
 }
