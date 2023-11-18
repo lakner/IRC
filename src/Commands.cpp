@@ -412,28 +412,27 @@ const char* Commands::UsernameAlreadyExists::what() const throw()
 
 int Commands::exec_user(Message *msg)
 {
-	// Client *sender = msg->get_sender();
+	Client *sender = msg->get_sender();
 
-	if (msg->get_sender()->get_nickname().empty())
+	if (sender->get_nickname().empty())
 		return -1;
-	if (!msg->get_sender()->get_username().empty())
+	if (!sender->get_username().empty())
 	{
-		msg->send_to(msg->get_sender(), string(HOSTNAME) + string(ERR_ALREADYREGISTRED) + " " + msg->get_sender()->get_nickname() + " :You may not reregister");
+		msg->send_to(sender, string(HOSTNAME) + string(ERR_ALREADYREGISTRED) + " " + msg->get_sender()->get_nickname() + " :You may not reregister");
 		return (atoi(ERR_ALREADYREGISTRED));
 	}
 	std::stringstream ss (msg->get_payload());
 	string username, unused, realname;
-	Client *client = msg->get_sender();
 
 	ss >> username >> unused >> unused >> realname;
 	std::cout << "USER: username: " << username << " unused: " << unused << " realname: " << realname << std::endl;
-	client->set_username(username);
+	sender->set_username(username);
 
 	msg->get_sender()->authenticate(2);
 	string response = ":127.0.0.1 " + string(RPL_WELCOME) + " " + msg->get_sender()->get_nickname();
 	response += " :Welcome to the Internet Relay Network ";
-	response += client->get_full_client_identifier();
-	msg->send_to(client, response);
+	response += sender->get_full_client_identifier();
+	msg->send_to(sender, response);
 	return 0;
 }
 
