@@ -1,16 +1,11 @@
 #include "Message.hpp"
 #include "Numeric.hpp"
 
-Message::Message()
-{
-
-}
-
 Message::Message(Client *sender, std::string content) : _sender(sender),
-														_raw_content(content)
+														_raw_content(content),
+														_recpnt(NULL),
+														_command("")
 {
-	_recpnt = NULL;
-	_command = "";
 }
 
 Message::~Message()
@@ -81,7 +76,7 @@ int	Message::parse()
 		std::string first_word;
 
 		ss >> first_word;
-		send_to(_sender, _sender.get_server_string() + " " + ERR_UNKNOWNCOMMAND + " " + get_sender()->get_nickname() + " " + first_word + " :Unknown command");
+		send_to(_sender, _sender->get_server_string() + " " + ERR_UNKNOWNCOMMAND + " " + get_sender()->get_nickname() + " " + first_word + " :Unknown command");
 		return -1;
 	}
 	if (!_command.empty() && _raw_content.find(_command) != std::string::npos)
@@ -124,7 +119,7 @@ int	Message::send_from_server(Client *new_recpnt, std::string content)
 {
 	//char hostname[64] = "127.0.0.1";
 	// //gethostname(hostname, sizeof(hostname));
-	content = std::string(HOSTNAME) + content;
+	content = new_recpnt->get_server_string() + content;
 	return(send_to(new_recpnt, content));
 }
 
