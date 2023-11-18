@@ -337,7 +337,7 @@ int Commands::exec_pass(Server *server, Message *msg)
 	return 1;
 }
 
-//not working
+
 bool Commands::is_valid_channel_name(std::string name)
 {
 	if (name.length() > 50 || !name.length())
@@ -349,7 +349,7 @@ bool Commands::is_valid_channel_name(std::string name)
 	return true;
 }
 
-bool Commands::is_valid_nickname(std::string name)
+bool Commands::is_valid_nickname(string name)
 {
 	if (name.length() > 32 || !name.length())
 		return false;
@@ -359,12 +359,12 @@ bool Commands::is_valid_nickname(std::string name)
 	valid += "abdcefghijklmnopqrstuvwxyz";
 	valid += "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 	valid += "0123456789";
-	if (name.find_first_not_of(valid) != std::string::npos)
+	if (name.find_first_not_of(valid) != string::npos)
 		return false;
 	return true;
 }
 
-bool is_valid_username(string name)
+bool Commands::is_valid_username(string name)
 {
 	if (name.length() > 32 || !name.length())
 		return false;
