@@ -97,21 +97,21 @@ int Commands::exec_mode(Server *server, Message *msg)
 
 int Commands::exec_who(Server *server, Message *msg)
 {
-	std::string			channel_name;
-	//Client*				sender = msg->get_sender();
+	string				channel_name;
+	Client*				sender = msg->get_sender();
+	string 				response = sender->get_server_string();
 	std::stringstream	ss(msg->get_payload());
-	std::string			response = "";
 	
 	ss >> channel_name;
 
 	if (channel_name.empty())
 	{
-		response += std::string(HOSTNAME) + " " + ERR_NEEDMOREPARAMS;
+		response += sender->get_server_string() + " " + ERR_NEEDMOREPARAMS;
 		return (msg->send_to(msg->get_sender(), response));
 	}
 	else if(!server->channel_exists(channel_name))
 	{
-		response += std::string(HOSTNAME) + " " + ERR_NOSUCHCHANNEL;
+		response += sender->get_server_string() + " " + ERR_NOSUCHCHANNEL;
 		return (msg->send_to(msg->get_sender(), response));
 	}
 
@@ -129,7 +129,7 @@ int Commands::exec_who(Server *server, Message *msg)
 	}
 	response += " :1";
 	msg->send_to(msg->get_sender(), response);
-	response = std::string(HOSTNAME) + " " + RPL_ENDOFWHO + msg->get_sender()->get_nickname();
+	response = sender->get_server_string() + " " + RPL_ENDOFWHO + msg->get_sender()->get_nickname();
 	response += " " + channel_name + " :End of WHO list";
 	msg->send_to(msg->get_sender(), response);
 	return 0;
@@ -156,24 +156,24 @@ int	Commands::exec_topic(Server *server, Message *msg)
 	// we don't need a topic, but the channel name needs to be defined
 	if (channel_name.empty())
 	{
-		response += std::string(HOSTNAME) + " " + ERR_NEEDMOREPARAMS;
+		response += sender->get_server_string() + " " + ERR_NEEDMOREPARAMS;
 		return (msg->send_to(msg->get_sender(), response));
 	}
 	// channel needs to exist
 	else if(!server->channel_exists(channel_name))
 	{
-		response += string(HOSTNAME) + " " + ERR_NOSUCHCHANNEL;
+		response += sender->get_server_string() + " " + ERR_NOSUCHCHANNEL;
 		return (msg->send_to(msg->get_sender(), response));
 	}
 
 	Channel& ch = server->get_channel(channel_name);
 	if (!ch.client_in_channel(*sender))		// client needs to be in channel
-		response += string(HOSTNAME) + " " + string(ERR_NOTONCHANNEL) + " " + ch.get_channel_name() + " :You're not on that channel";
+		response += sender->get_server_string() + " " + string(ERR_NOTONCHANNEL) + " " + ch.get_channel_name() + " :You're not on that channel";
 	else if (!ch.allowed_to_set_topic(sender->get_nickname()))
-		response += string(HOSTNAME) + " " + string(ERR_CHANOPRIVSNEEDED) + " " + ch.get_channel_name() + " :You're not a channel operator";
+		response += sender->get_server_string() + " " + string(ERR_CHANOPRIVSNEEDED) + " " + ch.get_channel_name() + " :You're not a channel operator";
 	else if (new_channel_topic.empty())		// no second parameter or it does not start with ':' - return the topic
 	{	
-		response += string(HOSTNAME) + " " + string(RPL_TOPIC) + " " + msg->get_sender()->get_nickname() + " " ;
+		response += sender->get_server_string() + " " + string(RPL_TOPIC) + " " + msg->get_sender()->get_nickname() + " " ;
 		response += ch.get_channel_name();
 		if (ch.get_topic() == "")
 			response +=" :No topic is set."; 
@@ -194,7 +194,7 @@ int	Commands::exec_kick(Server *server, Message *msg)
 	Client				*sender = msg->get_sender();
 	std::string			sender_nick = sender->get_nickname();
 	std::string			channel_name, nick_to_kick, reason = "";
-	std::string			response = std::string(HOSTNAME) + " ";
+	std::string			response = sender->get_server_string() + " ";
 	Client& client = *(msg->get_sender());
 
 	ss >> channel_name >> nick_to_kick;
@@ -263,32 +263,32 @@ int	Commands::exec_invite(Server *server, Message *msg)
 	ss >> nickname >> channel_name;
 	if (nickname.empty() || channel_name.empty())
 	{
-		msg->send_to(msg->get_sender(), std::string(HOSTNAME) + std::string(ERR_NEEDMOREPARAMS));
+		msg->send_to(msg->get_sender(), sender->get_server_string() + std::string(ERR_NEEDMOREPARAMS));
 		return (461);
 	}
 
 	if(!server->channel_exists(channel_name))
 	{
-		msg->send_to(msg->get_sender(), std::string(HOSTNAME) + std::string(ERR_NOSUCHCHANNEL));
+		msg->send_to(msg->get_sender(), sender->get_server_string() + std::string(ERR_NOSUCHCHANNEL));
 		return (403);
 	}
 
 	Channel &ch = server->get_channel(channel_name);
 	if (!ch.client_in_channel(*sender))
 	{
-		msg->send_to(msg->get_sender(), std::string(HOSTNAME) + std::string(ERR_NOTONCHANNEL));
+		msg->send_to(msg->get_sender(), sender->get_server_string() + std::string(ERR_NOTONCHANNEL));
 		return (442);
 	}
 
 	if (!ch.allowed_to_invite_kick(sender->get_nickname()))
 	{
-		msg->send_to(msg->get_sender(), std::string(HOSTNAME) + std::string(ERR_CHANOPRIVSNEEDED));
+		msg->send_to(msg->get_sender(), sender->get_server_string() + std::string(ERR_CHANOPRIVSNEEDED));
 		return (482);
 	}
 
 	if (!server->nickname_exists(nickname))
 	{
-		msg->send_to(msg->get_sender(), std::string(HOSTNAME) + std::string(ERR_NOSUCHNICK));
+		msg->send_to(msg->get_sender(), sender->get_server_string() + std::string(ERR_NOSUCHNICK));
 		return (401);
 	}
 	
@@ -296,7 +296,7 @@ int	Commands::exec_invite(Server *server, Message *msg)
 
 	if (ch.client_in_channel(invited))
 	{
-		msg->send_to(msg->get_sender(), std::string(HOSTNAME) + std::string(ERR_USERONCHANNEL));
+		msg->send_to(msg->get_sender(), sender->get_server_string() + std::string(ERR_USERONCHANNEL));
 		return (443);
 	}
 
@@ -313,15 +313,15 @@ int	Commands::exec_ping(Message *msg)
 int	Commands::exec_cap(Message *msg)
 {
 	// we ignore CAP messages
-	// Client	*sender = msg->get_sender();
+	Client	*sender = msg->get_sender();
 	
-	msg->send_to(msg->get_sender(), std::string(HOSTNAME) + ":irc.unknown.net CAP * LS :account-notify account-tag away-notify batch cap-notify chghost draft/relaymsg echo-message extended-join inspircd.org/poison inspircd.org/standard-replies invite-notify labeled-response message-tags multi-prefix sasl server-time setname userhost-in-names ");
+	msg->send_to(msg->get_sender(), sender->get_server_string() + ":irc.unknown.net CAP * LS :account-notify account-tag away-notify batch cap-notify chghost draft/relaymsg echo-message extended-join inspircd.org/poison inspircd.org/standard-replies invite-notify labeled-response message-tags multi-prefix sasl server-time setname userhost-in-names ");
 	return 0;
 }
 
 int Commands::exec_pass(Server *server, Message *msg)
 {
-	// Client		*sender = msg->get_sender();
+	Client		*sender = msg->get_sender();
 	string		payload = msg->get_payload();
 
 	payload.erase(0, payload.find_first_not_of(": "));
@@ -334,12 +334,12 @@ int Commands::exec_pass(Server *server, Message *msg)
 	}
 	else if (payload.empty())
 	{
-		msg->send_to(msg->get_sender(), std::string(HOSTNAME) + std::string(ERR_NEEDMOREPARAMS));
+		msg->send_to(msg->get_sender(), sender->get_server_string() + std::string(ERR_NEEDMOREPARAMS));
 		return 0;
 	}
 	else if (msg->get_sender()->is_authd() != 0)
 	{
-		msg->send_to(msg->get_sender(), std::string(HOSTNAME) + std::string(ERR_ALREADYREGISTRED) + " " + msg->get_sender()->get_nickname() + " :You may not reregister");
+		msg->send_to(msg->get_sender(), sender->get_server_string() + std::string(ERR_ALREADYREGISTRED) + " " + msg->get_sender()->get_nickname() + " :You may not reregister");
 		return 0;
 	}
 	return 1;
@@ -418,9 +418,10 @@ int Commands::exec_user(Message *msg)
 		return -1;
 	if (!sender->get_username().empty())
 	{
-		msg->send_to(sender, string(HOSTNAME) + string(ERR_ALREADYREGISTRED) + " " + msg->get_sender()->get_nickname() + " :You may not reregister");
+		msg->send_to(sender, sender->get_server_string() + string(ERR_ALREADYREGISTRED) + " " + sender->get_nickname() + " :You may not reregister");
 		return (atoi(ERR_ALREADYREGISTRED));
 	}
+
 	std::stringstream ss (msg->get_payload());
 	string username, unused, realname;
 
