@@ -227,7 +227,7 @@ int	Commands::exec_kick(Server *server, Message *msg)
 		response += string(ERR_USERNOTINCHANNEL) + " " + sender_nick + " ";
 		response += nick_to_kick + " " + channel_name + " :They aren't on that channel";
 	}
-	else if (!ch.allowed_to_invite_kick(sender->get_nickname()))
+	else if (!ch.allowed_to_kick(sender->get_nickname()))
 	{
 		response += string(ERR_CHANOPRIVSNEEDED) + " " + sender_nick + " " + nick_to_kick;
 		response += " " + channel_name + " :You're not a channel operator";
