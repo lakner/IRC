@@ -250,49 +250,69 @@ int	Commands::exec_invite(Server *server, Message *msg)
 	std::stringstream	ss (msg->get_payload());
 	std::string 		channel_name, nickname;
 	Client				*sender = msg->get_sender();
+	string				response = sender->get_server_string() + " ";
+	std::string			sender_nick = sender->get_nickname();
+	std::string			reason = "";
+	Client& client = *(msg->get_sender());
+	Client& invited = server->get_client(nickname);
 
 	ss >> nickname >> channel_name;
+	if (channel_name == nickname)
+	{
+		if (msg->get_payload().find(":") != std::string::npos)
+			nickname = msg->get_payload().substr(msg->get_payload().find(":") + 1);
+	}
+	else
+	{
+		if (msg->get_payload().find(":") != std::string::npos)
+			reason = msg->get_payload().substr(msg->get_payload().find(":"));
+	}
 	if (nickname.empty() || channel_name.empty())
 	{
-		msg->send_to(msg->get_sender(), sender->get_server_string() + std::string(ERR_NEEDMOREPARAMS));
-		return (461);
+		response += std::string(ERR_NEEDMOREPARAMS) + " " + sender_nick + " ";
+		response += channel_name + " :No channel or user specified";
+		return (msg->send_to(&client, response));
 	}
-
-	if(!server->channel_exists(channel_name))
+	else if(!server->channel_exists(channel_name))
 	{
-		msg->send_to(msg->get_sender(), sender->get_server_string() + std::string(ERR_NOSUCHCHANNEL));
-		return (403);
+		response += std::string(ERR_NOSUCHCHANNEL) + " " + sender_nick + " " + channel_name + " :No such channel";
+		return (msg->send_to(&client, response));
 	}
 
 	Channel &ch = server->get_channel(channel_name);
-	if (!ch.client_in_channel(*sender))
-	{
-		msg->send_to(msg->get_sender(), sender->get_server_string() + std::string(ERR_NOTONCHANNEL));
-		return (442);
-	}
-
-	if (!ch.allowed_to_invite_kick(sender->get_nickname()))
-	{
-		msg->send_to(msg->get_sender(), sender->get_server_string() + std::string(ERR_CHANOPRIVSNEEDED));
-		return (482);
-	}
+	std::cout << "INVITE: nick_to_invite: " << nickname << std::endl;
 
 	if (!server->nickname_exists(nickname))
 	{
-		msg->send_to(msg->get_sender(), sender->get_server_string() + std::string(ERR_NOSUCHNICK));
-		return (401);
+		response += std::string(ERR_NOSUCHNICK) + " " + sender_nick + " ";
+		response += nickname + " " + channel_name + " :No such nick";
 	}
-	
-	Client& invited = server->get_client(nickname);
-
-	if (ch.client_in_channel(invited))
+	else if (!ch.allowed_to_invite(client.get_nickname()))
 	{
-		msg->send_to(msg->get_sender(), sender->get_server_string() + std::string(ERR_USERONCHANNEL));
-		return (443);
+		response += std::string(ERR_CHANOPRIVSNEEDED) + " " + sender_nick + " " + nickname;
+		response += " " + channel_name + " :You're not a channel operator";
 	}
-
-	invite(server, channel_name, nickname);
-	return (0);
+	else if (!ch.client_in_channel(*sender))
+	{
+		response += std::string(ERR_NOTONCHANNEL) + " " + sender_nick + " " + nickname;
+		response += " " + channel_name + " :You're not a member of the channel";
+	}
+	else if (ch.client_in_channel(invited))
+	{
+		response += std::string(ERR_USERONCHANNEL) + " " + sender_nick + " " + nickname;
+		response += " " + channel_name + " :User already in channel";
+	}
+	else
+	{
+		response = ":" + client.get_full_client_identifier() + " INVITE " + channel_name;
+		if (reason.empty())
+			response += " " + nickname + " :" + sender_nick;
+		else
+			response += " " + nickname + " " + reason;
+		msg->send_to(&(server->get_client(nickname)), response);
+		invite(server, channel_name, nickname);
+	}
+	return (msg->send_to(&client, response));
 }
 
 int	Commands::exec_ping(Message *msg)
