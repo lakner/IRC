@@ -255,16 +255,14 @@ int		Server::remove_client(int client_fd, int bytes_read)
 		std::cout << "Error on receive" << std::endl;
 	close(client_fd); // Bye!
 	_clients.erase(client_fd);
-	struct pollfd disconnected;
 	for (std::vector<pollfd>::iterator it = _pollfds.begin(); it != _pollfds.end(); it++)
 	{
 		if (it->fd == client_fd)
 		{
-			disconnected = *it;
+			_pollfds.erase(it);
 			break;
 		}
 	}
-	//_pollfds.erase(std::remove(_pollfds.begin(), _pollfds.end(), disconnected));
 	return (bytes_read);
 }
 
