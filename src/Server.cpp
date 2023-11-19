@@ -192,11 +192,10 @@ void	Server::new_client_connection()
 
 string	Server::read_server_ipv4_addr(int socket_fd)
 {
-	char server_ip[16];
 	struct sockaddr_in sock;
 	socklen_t len = sizeof(sock);
 	getsockname(socket_fd, (struct sockaddr *) &sock, &len);
-	inet_ntop(AF_INET, &sock.sin_addr, server_ip, sizeof(server_ip));
+	string server_ip = inet_ntoa(sock.sin_addr);
 	std::cout << "Server ip address: " << server_ip << std::endl;
 	return string(server_ip);
 }
@@ -204,9 +203,7 @@ string	Server::read_server_ipv4_addr(int socket_fd)
 string	Server::read_client_ipv4_addr(struct sockaddr& client_addr)
 {
 	struct in_addr ip_addr = ((struct sockaddr_in*) &client_addr)->sin_addr;
-	char ip_str[INET_ADDRSTRLEN];
-
-	inet_ntop(AF_INET, &ip_addr, ip_str, INET_ADDRSTRLEN);
+	string ip_str = inet_ntoa(ip_addr);
 	std::cout << "New client IP address: " << ip_str << std::endl;
 	return string(ip_str);
 }
