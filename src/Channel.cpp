@@ -264,6 +264,7 @@ void	Channel::kick(std::string nickname)
 		{
 			remove_user(cl);
 			remove_operator(cl);
+			break ;
 		}
 	}
 }

@@ -264,7 +264,7 @@ int		Server::remove_client(int client_fd, int bytes_read)
 			break;
 		}
 	}
-	_pollfds.erase(std::remove(_pollfds.begin(), _pollfds.end(), disconnected));
+	//_pollfds.erase(std::remove(_pollfds.begin(), _pollfds.end(), disconnected));
 	return (bytes_read);
 }
 
