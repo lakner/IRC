@@ -135,7 +135,11 @@ void	Channel::send_user_list(Client *client)
 	
 	std::map<std::string, Client*>::iterator it;
 	for (it = _client_list.begin(); it != _client_list.end(); it++)
+	{
+		if (is_operator(it->first))
+			msg_content += "@";
 		msg_content += it->first + " ";
+	}
 	Message::send_from_server(client, msg_content);
 	msg_content = std::string(RPL_ENDOFNAMES);
 	msg_content += " " + client->get_nickname();
