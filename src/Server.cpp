@@ -222,14 +222,7 @@ int	Server::read_from_existing_client(int client_fd)
 	std::cout << "get_read_buffer: " << client.get_read_buffer() << std::endl;
 
 	if (nbytes <= 0)
-	{
-		if (nbytes == 0) // Connection closed
-			std::cout << "pollserver: socket " << client_fd << " hung up." << std::endl;
-		else // some other error
-			std::cout << "Error on receive" << std::endl;
-		close(client_fd); // Bye!
-		return (nbytes);
-	}
+		return remove_client(client_fd, nbytes);
 	while (client.get_read_buffer().find("\r\n") != std::string::npos)
 	{
 		std::cout << "Found CRLF in message, continuing" << std::endl;
@@ -252,6 +245,27 @@ void	Server::add_client	(int client_fd,
 {
 	Client		new_client(client_fd, client_ip_v4_addr, server_ipv4_addr);
 	_clients.insert(std::pair<int, Client>(client_fd, new_client));
+}
+
+int		Server::remove_client(int client_fd, int bytes_read)
+{
+	if (bytes_read == 0) // Connection closed
+		std::cout << "pollserver: socket " << client_fd << " hung up." << std::endl;
+	else // some other error
+		std::cout << "Error on receive" << std::endl;
+	close(client_fd); // Bye!
+	_clients.erase(client_fd);
+	struct pollfd disconnected;
+	for (std::vector<pollfd>::iterator it = _pollfds.begin(); it != _pollfds.end(); it++)
+	{
+		if (it->fd == client_fd)
+		{
+			disconnected = *it;
+			break;
+		}
+	}
+	_pollfds.erase(std::remove(_pollfds.begin(), _pollfds.end(), disconnected));
+	return (bytes_read);
 }
 
 
