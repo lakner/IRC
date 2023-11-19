@@ -54,8 +54,10 @@ class Server
 		struct addrinfo*				create_listener_socket(struct addrinfo* addrinfo);
 		void							new_client_connection();
 		int								read_from_existing_client(int client_fd);
-		void							add_client(int client_fd, std::string client_ipv4);
-		std::string						read_client_ipv4_address(struct sockaddr& client_addr);
+		void							add_client(int client_fd, std::string client_ipv4, std::string server_ipv4);
+		std::string						read_client_ipv4_addr(struct sockaddr& client_addr);
+		std::string						read_client_ipv4_addr(int socket_fd);
+		std::string						read_server_ipv4_addr(int socket_fd);
 };
 
 #endif

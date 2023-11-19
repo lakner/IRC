@@ -82,46 +82,41 @@ int		Channel::remove_operator(Client *client)
 void	Channel::notify_user_joined(Client *client)
 {
 	std::map<std::string, Client*>::iterator it;
-	Message msg;
 	std::string content = ":" + client->get_full_client_identifier();
 	content += " JOIN " + _channel_name;
 	for (it = _client_list.begin();	it != _client_list.end(); it++)
-		msg.send_to(it->second, content);
+		Message::send_to(it->second, content);
 }
 
 void	Channel::notify_user_exit(Client *client)
 {
 	std::map<std::string, Client*>::iterator it;
-	Message msg;
 	std::string content = ":" + client->get_full_client_identifier();
 	content += " EXIT " + _channel_name;
 	for (it = _client_list.begin();	it != _client_list.end(); it++)
-		msg.send_to(it->second, content);
+		Message::send_to(it->second, content);
 }
 
 void	Channel::notify_user_is_operator(Client *client)
 {
 	std::map<std::string, Client*>::iterator it;
-	Message msg;
 	std::string content = ":" + client->get_full_client_identifier();
 	content += " MODE " + _channel_name + " +o " + client->get_nickname();
 	for (it = _client_list.begin();	it != _client_list.end(); it++)
-		msg.send_to(it->second, content);
+		Message::send_to(it->second, content);
 }
 
 void	Channel::notify_mode_changed(Client *client)
 {
 	std::map<std::string, Client*>::iterator it;
-	Message msg;
 	std::string content = ":" + client->get_full_client_identifier();
 	content += " MODE " + _channel_name + " +o";
 	for (it = _client_list.begin();	it != _client_list.end(); it++)
-		msg.send_to(it->second, content);
+		Message::send_to(it->second, content);
 }
 
 void	Channel::send_topic(Client *client)
 {
-	Message msg;
 	std::string msg_content;
 	if (_topic.empty())
 		msg_content = std::string(RPL_NOTOPIC);
@@ -129,12 +124,11 @@ void	Channel::send_topic(Client *client)
 		msg_content = std::string(RPL_TOPIC);
 	msg_content += " " + client->get_nickname();
 	msg_content += " " + _channel_name + " :" + _topic;
-	msg.send_from_server(client, msg_content);
+	Message::send_from_server(client, msg_content);
 }	
 
 void	Channel::send_user_list(Client *client)
 {
-	Message msg;
 	std::string msg_content = std::string(RPL_NAMREPLY); 
 	msg_content += " " + client->get_nickname();
 	msg_content += " = " + _channel_name + " :"; //add @ before operator name
@@ -142,21 +136,20 @@ void	Channel::send_user_list(Client *client)
 	std::map<std::string, Client*>::iterator it;
 	for (it = _client_list.begin(); it != _client_list.end(); it++)
 		msg_content += it->first + " ";
-	msg.send_from_server(client, msg_content);
+	Message::send_from_server(client, msg_content);
 	msg_content = std::string(RPL_ENDOFNAMES);
 	msg_content += " " + client->get_nickname();
 	msg_content += " " + _channel_name + " :End of /NAMES list";
-	msg.send_from_server(client, msg_content);
+	Message::send_from_server(client, msg_content);
 }
 
 int Channel::send_to_all_in_channel(std::string content)
 {
 	std::map<std::string, Client*>::iterator it;
-	Message msg;
 	for (it = _client_list.begin(); it != _client_list.end(); it++)
 	{
 		std::cout << "send_to_all_in_channel: Iterating over client list. Current client: " << it->second->get_nickname() << std::endl;
-		msg.send_to(it->second, content);
+		Message::send_to(it->second, content);
 	}
 	return 0;
 }
@@ -164,12 +157,11 @@ int Channel::send_to_all_in_channel(std::string content)
 int Channel::send_to_all_except(std::string content, Client& client)
 {
 	std::map<std::string, Client*>::iterator it;
-	Message msg;
 	for (it = _client_list.begin(); it != _client_list.end(); it++)
 	{
 		std::cout << "send_to_all_except: Iterating over client list. Current client: " << it->second->get_nickname() << std::endl;
 		if (it->second != &client)
-			msg.send_to(it->second, content);
+			Message::send_to(it->second, content);
 	}
 	return 0;
 }
@@ -211,7 +203,14 @@ bool	Channel::is_operator(std::string nickname)
 	return (false);
 }
 
-bool	Channel::allowed_to_invite_kick(std::string nickname)
+bool	Channel::allowed_to_invite(std::string nickname) //change
+{
+	if (_invite_only)
+		return(is_operator(nickname));
+	return (true);
+}
+
+bool	Channel::allowed_to_kick(std::string nickname) //change
 {
 	return(is_operator(nickname));
 }
@@ -251,7 +250,8 @@ bool	Channel::get_invite_only()
 {
 	return (_invite_only);
 }
-//kick a user from a channel
+
+
 void	Channel::kick(std::string nickname)
 {
 	std::map<std::string, Client*>::iterator it = _client_list.begin();
@@ -262,8 +262,6 @@ void	Channel::kick(std::string nickname)
 
 		if (cl->get_nickname() == nickname)
 		{
-			std::string msg;
-			msg = 
 			remove_user(cl);
 			remove_operator(cl);
 		}
