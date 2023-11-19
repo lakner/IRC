@@ -203,7 +203,14 @@ bool	Channel::is_operator(std::string nickname)
 	return (false);
 }
 
-bool	Channel::allowed_to_invite_kick(std::string nickname)
+bool	Channel::allowed_to_invite(std::string nickname) //change
+{
+	if (_invite_only)
+		return(is_operator(nickname));
+	return (true);
+}
+
+bool	Channel::allowed_to_kick(std::string nickname) //change
 {
 	return(is_operator(nickname));
 }
