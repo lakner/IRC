@@ -192,30 +192,23 @@ void	Server::new_client_connection()
 
 string	Server::read_server_ipv4_addr(int socket_fd)
 {
-	// char server_ip[16];
-	// struct sockaddr_in sock;
-	// socklen_t len = sizeof(sock);
-	// getsockname(socket_fd, (struct sockaddr *) &sock, &len);
-	// inet_ntop(AF_INET, &sock.sin_addr, server_ip, sizeof(server_ip));
-	// std::cout << "Server ip address: " << server_ip << std::endl;
-	// return string(server_ip);
-
-	(void) socket_fd;
-	return "server ip";
-
+	char server_ip[16];
+	struct sockaddr_in sock;
+	socklen_t len = sizeof(sock);
+	getsockname(socket_fd, (struct sockaddr *) &sock, &len);
+	inet_ntop(AF_INET, &sock.sin_addr, server_ip, sizeof(server_ip));
+	std::cout << "Server ip address: " << server_ip << std::endl;
+	return string(server_ip);
 }
 
 string	Server::read_client_ipv4_addr(struct sockaddr& client_addr)
 {
-	// struct in_addr ip_addr = ((struct sockaddr_in*) &client_addr)->sin_addr;
-	// char ip_str[INET_ADDRSTRLEN];
+	struct in_addr ip_addr = ((struct sockaddr_in*) &client_addr)->sin_addr;
+	char ip_str[INET_ADDRSTRLEN];
 
-	// inet_ntop(AF_INET, &ip_addr, ip_str, INET_ADDRSTRLEN);
-	// std::cout << "New client IP address: " << ip_str << std::endl;
-	// return string(ip_str);
-
-	(void) client_addr;
-	return (string("x.x.x.x"));
+	inet_ntop(AF_INET, &ip_addr, ip_str, INET_ADDRSTRLEN);
+	std::cout << "New client IP address: " << ip_str << std::endl;
+	return string(ip_str);
 }
 
 int	Server::read_from_existing_client(int client_fd)
@@ -263,9 +256,6 @@ void	Server::add_client	(int client_fd,
 	Client		new_client(client_fd, client_ip_v4_addr, server_ipv4_addr);
 	_clients.insert(std::pair<int, Client>(client_fd, new_client));
 }
-
-
-
 
 
 void Server::add_channel(std::string name, std::string pass)

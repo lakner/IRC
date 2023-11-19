@@ -8,7 +8,7 @@ Client::Client(int client_fd, string client_ipv4_addr, string server_ipv4_addr) 
 		_client_fd(client_fd), 
 		_client_ipv4_addr(client_ipv4_addr),
 		_server_ipv4_addr(server_ipv4_addr),
-		_server_string(": " + _server_ipv4_addr + " "),
+		_server_string(":" + _server_ipv4_addr + " "),
 		_nickname(""),
 		_authenticated(0) 
 {
