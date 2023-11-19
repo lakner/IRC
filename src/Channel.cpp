@@ -286,7 +286,7 @@ void	Channel::kick(std::string nickname)
 // 	ret += mode;
 // 	return (ret);
 // }
-//
+
 
 std::string	Channel::set_mode(char mode, bool mode_stat, std::stringstream *param, Server *server, Message *msg)
 {
