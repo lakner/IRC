@@ -66,7 +66,8 @@ int Commands::exec_mode(Server *server, Message *msg)
 	}
 	if (modes.empty())
 	{
-		msg->send_from_server(sender, std::string(RPL_CHANNELMODEIS) + " " + sender->get_nickname() + " " + channel_name + " :" + server->get_channel(channel_name).get_modes());
+		msg->send_from_server(sender, std::string(RPL_CHANNELMODEIS) + " " + sender->get_nickname() \
+								+ " " + channel_name + " :" + server->get_channel(channel_name).get_modes());
 		return (0);
 	}
 	for (std::string::size_type i = 0; i < modes.length(); i++)

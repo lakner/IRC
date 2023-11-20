@@ -140,18 +140,8 @@ int	Server::run()
 			{
 				if (it->fd == this->_server_sock_fd)
 					new_client_connection();
-				else
-				{
-					if (read_from_existing_client(it->fd) <= 0)
-					{
-						std::map<const int, Client>::iterator it1 = _clients.find(it->fd);
-						if (it1 != _clients.end())
-							_clients.erase(it1);
-						it->revents = 0;
-						it = this->_pollfds.erase(it);
-						continue;
-					}
-				}
+				else if (read_from_existing_client(it->fd) <= 0)
+					continue ;
 			}
 			if(it->revents & POLLOUT)
 				get_client(it->fd).send_all_in_write_buffer();
