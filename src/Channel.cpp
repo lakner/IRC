@@ -59,7 +59,6 @@ int		Channel::remove_user(Client *client)
 int		Channel::add_operator(Client *client)
 {
 	_operator_list[client->get_nickname()] = client;
-	notify_user_is_operator(client);
 	return 0;
 }
 
@@ -81,39 +80,33 @@ int		Channel::remove_operator(Client *client)
 
 void	Channel::notify_user_joined(Client *client)
 {
-	std::map<std::string, Client*>::iterator it;
 	std::string content = ":" + client->get_full_client_identifier();
 	content += " JOIN " + _channel_name;
-	for (it = _client_list.begin();	it != _client_list.end(); it++)
-		Message::send_to(it->second, content);
+	send_to_all_in_channel(content);
 }
 
 void	Channel::notify_user_exit(Client *client)
 {
-	std::map<std::string, Client*>::iterator it;
 	std::string content = ":" + client->get_full_client_identifier();
 	content += " EXIT " + _channel_name;
-	for (it = _client_list.begin();	it != _client_list.end(); it++)
-		Message::send_to(it->second, content);
+	send_to_all_in_channel(content);
 }
 
-void	Channel::notify_user_is_operator(Client *client)
-{
-	std::map<std::string, Client*>::iterator it;
-	std::string content = ":" + client->get_full_client_identifier();
-	content += " MODE " + _channel_name + " +o " + client->get_nickname();
-	for (it = _client_list.begin();	it != _client_list.end(); it++)
-		Message::send_to(it->second, content);
-}
+// void	Channel::notify_user_is_operator(Client *client)
+// {
+// 	std::string content = ":" + client->get_full_client_identifier();
+// 	content += " MODE " + _channel_name + " +o " + client->get_nickname();
+// 	send_to_all_in_channel(content);
+// }
 
-void	Channel::notify_mode_changed(Client *client)
-{
-	std::map<std::string, Client*>::iterator it;
-	std::string content = ":" + client->get_full_client_identifier();
-	content += " MODE " + _channel_name + " +o";
-	for (it = _client_list.begin();	it != _client_list.end(); it++)
-		Message::send_to(it->second, content);
-}
+// void	Channel::notify_mode_changed(Client *client)
+// {
+// 	std::map<std::string, Client*>::iterator it;
+// 	std::string content = ":" + client->get_full_client_identifier();
+// 	content += " MODE " + _channel_name + " +o";
+// 	for (it = _client_list.begin();	it != _client_list.end(); it++)
+// 		Message::send_to(it->second, content);
+// }
 
 void	Channel::send_topic(Client *client)
 {
@@ -301,6 +294,18 @@ std::string	Channel::set_mode(char mode, bool mode_stat, std::stringstream *para
 {
 	std::string temp;
 	Client		*sender = msg->get_sender();
+	std::string mode_message = ":" + sender->get_full_client_identifier() + " MODE " + _channel_name;
+
+	if (mode == 'k' || mode == 'l' || mode == 'o')
+	{
+		*param >> temp;
+		if (temp.empty())
+		{
+			msg->send_from_server(sender, std::string(ERR_NEEDMOREPARAMS) + " " + sender->get_nickname() + " " + mode + ":");
+			return ("");
+		}
+	}
+	
 	switch (mode)
 	{
 		case 'i':
@@ -320,63 +325,50 @@ std::string	Channel::set_mode(char mode, bool mode_stat, std::stringstream *para
 			break ;
 
 		case 'k':
-			*param >> temp;
-			if (mode_stat && _password == temp)
-				break;
-			else if ((mode_stat && _password.empty()) || (!mode_stat && _password != temp))
+			if ((mode_stat && _password.empty()))
 			{
 				_password = temp;
-				msg->send_to(sender, ":" + sender->get_full_client_identifier() + " MODE " + get_channel_name() + " +k :" + _password);
+				send_to_all_in_channel(mode_message + " +k :" + _password);
 			}
 			else if (!mode_stat && _password == temp)
 			{
 				_password.clear();
-				msg->send_to(sender, ":" + sender->get_full_client_identifier() + " MODE " + get_channel_name() + " -k :" + _password);
+				send_to_all_in_channel(mode_message + " -k :" + _password);
 			}
 			break ;
 
 		case 'o':
-			if (mode_stat)
+			if (!client_in_channel(server->get_client(temp)))
+				msg->send_from_server(sender, std::string(ERR_NOSUCHNICK) + " " + sender->get_nickname() + " " + temp + " :No such nick");
+			else if (mode_stat && !is_operator(temp))
 			{
-				*param >> temp;
-				if (!is_operator(temp))
 					add_operator(&server->get_client(temp));
-				else
-					std::cout << "error" << std::endl;
-					//reply error
+					send_to_all_in_channel(mode_message + " +o :" + temp);
 			}
-			else
+			else if (is_operator(temp) && !mode_stat)
 			{
-				if (is_operator(temp))
 					remove_operator(&server->get_client(temp));
-				else
-					std::cout << "error" << std::endl;
-					//reply error
+					send_to_all_in_channel(mode_message + " -o :" + temp);
 			}
 			break ;
 
-		case 'l': //maybe add unlimited with -l??
+		case 'l':
 			if (mode_stat)
 			{
-				*param >> temp;
 				try {
-	    	    	int limit = std::stoi(temp);
-					if (limit > 9999)
-						_userlimit = 9999;
-					else
-						_userlimit = limit;
-					msg->send_to(sender, ":" + sender->get_full_client_identifier() + " MODE " + get_channel_name() + " +l :" + std::to_string(_userlimit));
-   			 	} catch (const std::invalid_argument& e) {
-        			std::cerr << "Invalid argument: " << e.what() << std::endl; //no code for this case
-    			} catch (const std::out_of_range& e) {
-					_userlimit = 9999;
-        			msg->send_to(sender, ":" + sender->get_full_client_identifier() + " MODE " + get_channel_name() + " +l :" + std::to_string(_userlimit));
-    			}
+    				int limit = std::stoi(temp);
+   					_userlimit = (limit > 9999) ? 9999 : limit;
+				} catch (const std::invalid_argument& e) {
+				    break;
+				} catch (const std::out_of_range& e) {
+   					_userlimit = 9999;
+				}
+				send_to_all_in_channel(mode_message + get_channel_name() + " +l :" + std::to_string(_userlimit));
 			}
 			else
 			{
 				_userlimit = 9999;
-        		msg->send_to(sender, ":" + sender->get_full_client_identifier() + " MODE " + get_channel_name() + " :-l");
+        		send_to_all_in_channel(mode_message + get_channel_name() + " :-l");
 			}
 			break ;
 	}

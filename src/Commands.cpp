@@ -66,7 +66,8 @@ int Commands::exec_mode(Server *server, Message *msg)
 	}
 	if (modes.empty())
 	{
-		msg->send_from_server(sender, std::string(RPL_CHANNELMODEIS) + " " + sender->get_nickname() + " " + channel_name + " :" + server->get_channel(channel_name).get_modes());
+		msg->send_from_server(sender, std::string(RPL_CHANNELMODEIS) + " " + sender->get_nickname() \
+								+ " " + channel_name + " :" + server->get_channel(channel_name).get_modes());
 		return (0);
 	}
 	for (std::string::size_type i = 0; i < modes.length(); i++)
@@ -91,7 +92,8 @@ int Commands::exec_mode(Server *server, Message *msg)
 		}
 		modes_set += server->get_channel(channel_name).set_mode(modes[i], mode_state, &ss, server, msg);
 	}
-	msg->send_to(sender, ":" + sender->get_full_client_identifier() + " MODE " + channel_name + " :" + modes_set);
+	if (modes_set.size() > 1)
+		server->get_channel(channel_name).send_to_all_in_channel(":" + sender->get_full_client_identifier() + " MODE " + channel_name + " :" + modes_set);
 	return (0);
 }
 
@@ -409,8 +411,10 @@ int Commands::exec_nick(Message *msg, Server *serv)
 	else
 	{
 		response = ":" + msg->get_sender()->get_full_client_identifier() + " NICK :" + n_name;
-		msg->send_to(msg->get_sender(), response);
 		msg->get_sender()->set_nickname(n_name);
+		msg->get_sender()->send_to_all_in_my_channels(serv, response);
+		msg->send_to(msg->get_sender(), response); // send to all channelmembers of all channels where sender is in
+		
 		return 0;
 	}
 	msg->send_from_server(msg->get_sender(), response);

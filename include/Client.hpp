@@ -4,6 +4,8 @@
 #include <string>
 #include "Server.hpp"
 
+class Server;
+
 class	Client
 {
 	public:
@@ -28,6 +30,8 @@ class	Client
 		bool			is_authd();
 		void			authenticate(int status);
 		int				send_all_in_write_buffer();
+		void			send_to_all_in_my_channels(Server *server, std::string response);
+
 	private:
 		int				_client_fd;
 		std::string		_client_ipv4_addr;
