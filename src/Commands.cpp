@@ -91,7 +91,8 @@ int Commands::exec_mode(Server *server, Message *msg)
 		}
 		modes_set += server->get_channel(channel_name).set_mode(modes[i], mode_state, &ss, server, msg);
 	}
-	msg->send_to(sender, ":" + sender->get_full_client_identifier() + " MODE " + channel_name + " :" + modes_set);
+	if (modes_set.size() > 1)
+		server->get_channel(channel_name).send_to_all_in_channel(":" + sender->get_full_client_identifier() + " MODE " + channel_name + " :" + modes_set);
 	return (0);
 }
 
