@@ -59,7 +59,6 @@ int		Channel::remove_user(Client *client)
 int		Channel::add_operator(Client *client)
 {
 	_operator_list[client->get_nickname()] = client;
-	//notify_user_is_operator(client);
 	return 0;
 }
 
@@ -81,29 +80,23 @@ int		Channel::remove_operator(Client *client)
 
 void	Channel::notify_user_joined(Client *client)
 {
-	std::map<std::string, Client*>::iterator it;
 	std::string content = ":" + client->get_full_client_identifier();
 	content += " JOIN " + _channel_name;
-	for (it = _client_list.begin();	it != _client_list.end(); it++)
-		Message::send_to(it->second, content);
+	send_to_all_in_channel(content);
 }
 
 void	Channel::notify_user_exit(Client *client)
 {
-	std::map<std::string, Client*>::iterator it;
 	std::string content = ":" + client->get_full_client_identifier();
 	content += " EXIT " + _channel_name;
-	for (it = _client_list.begin();	it != _client_list.end(); it++)
-		Message::send_to(it->second, content);
+	send_to_all_in_channel(content);
 }
 
 // void	Channel::notify_user_is_operator(Client *client)
 // {
-// 	std::map<std::string, Client*>::iterator it;
 // 	std::string content = ":" + client->get_full_client_identifier();
 // 	content += " MODE " + _channel_name + " +o " + client->get_nickname();
-// 	for (it = _client_list.begin();	it != _client_list.end(); it++)
-// 		Message::send_to(it->second, content);
+// 	send_to_all_in_channel(content);
 // }
 
 // void	Channel::notify_mode_changed(Client *client)

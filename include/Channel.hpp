@@ -49,7 +49,7 @@ class	Channel
 		std::map<std::string, Client*>	_operator_list;
 		void							notify_user_joined(Client *client);
 		void							notify_user_exit(Client *client);
-		// void							notify_user_is_operator(Client *client);
+		//void							notify_user_is_operator(Client *client);
 
 
 		//void							notify_mode_changed(Client *client);
