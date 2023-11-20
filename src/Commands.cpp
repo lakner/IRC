@@ -375,7 +375,7 @@ bool Commands::is_valid_nickname(string name)
 		return false;
 	if (isdigit(name[0]))
 		return false;
-	string valid = "<-[]\\^{}_";
+	string valid = "<-[]\\^{}_|";
 	valid += "abdcefghijklmnopqrstuvwxyz";
 	valid += "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 	valid += "0123456789";
@@ -400,12 +400,12 @@ int Commands::exec_nick(Message *msg, Server *serv)
 	string 		sender = msg->get_sender()->get_nickname();
 	std::cout << "NICK: '" << n_name << "'" << std::endl;
 
-	if(!is_valid_nickname(n_name))
+	if (n_name.empty())
+		response = " " + string(ERR_NONICKNAMEGIVEN) + " " + sender + " :No nickname given";
+	else if(!is_valid_nickname(n_name))
 		response = " " + string(ERR_ERRONEUSNICKNAME) + " " + sender + " " + n_name + " :Erronous nickname";
 	else if (serv->nickname_exists(n_name))
 		response = " " + string(ERR_NICKNAMEINUSE) + " " + sender + " " + n_name + " :Nickname is already in use.";
-	else if (n_name.empty())
-		response = " " + string(ERR_NONICKNAMEGIVEN) + " " + sender + " :No nickname given";
 	else
 	{
 		response = ":" + msg->get_sender()->get_full_client_identifier() + " NICK :" + n_name;
