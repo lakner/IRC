@@ -124,3 +124,15 @@ string Client::get_server_string()
 {
 	return(_server_string);
 }
+
+void Client::send_to_all_in_my_channels(Server *server, string response)
+{
+	std::map<std::string, Channel>& channels = server->get_channels();
+	std::map<std::string, Channel>::iterator it = channels.begin();
+
+	for (; it != channels.end(); it++) 
+	{
+		if (it->second.client_in_channel(server->get_client(_nickname)))
+			it->second.send_to_all_in_channel(response);
+	}
+}

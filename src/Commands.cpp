@@ -409,8 +409,10 @@ int Commands::exec_nick(Message *msg, Server *serv)
 	else
 	{
 		response = ":" + msg->get_sender()->get_full_client_identifier() + " NICK :" + n_name;
-		msg->send_to(msg->get_sender(), response);
 		msg->get_sender()->set_nickname(n_name);
+		msg->get_sender()->send_to_all_in_my_channels(serv, response);
+		msg->send_to(msg->get_sender(), response); // send to all channelmembers of all channels where sender is in
+		
 		return 0;
 	}
 	msg->send_from_server(msg->get_sender(), response);
