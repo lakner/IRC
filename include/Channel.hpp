@@ -35,6 +35,7 @@ class	Channel
 		bool							allowed_to_kick(std::string nickname); //change
 		bool							allowed_to_invite(std::string nickname); //change
 		void							kick(std::string nickname);
+		void							invite(Client *client);
 
 	private:
 		int								_channelusers;

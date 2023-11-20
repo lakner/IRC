@@ -273,6 +273,12 @@ void	Channel::kick(std::string nickname)
 	}
 }
 
+
+void	Channel::invite(Client *client)
+{
+	add_user(client, _password);
+}
+
 // std::string Channel::add_mode_change(char mode, bool *sign, bool mode_stat)
 // {
 	
