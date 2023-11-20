@@ -192,11 +192,10 @@ void	Server::new_client_connection()
 
 string	Server::read_server_ipv4_addr(int socket_fd)
 {
-	char server_ip[16];
 	struct sockaddr_in sock;
 	socklen_t len = sizeof(sock);
 	getsockname(socket_fd, (struct sockaddr *) &sock, &len);
-	inet_ntop(AF_INET, &sock.sin_addr, server_ip, sizeof(server_ip));
+	string server_ip = inet_ntoa(sock.sin_addr);
 	std::cout << "Server ip address: " << server_ip << std::endl;
 	return string(server_ip);
 }
@@ -204,9 +203,7 @@ string	Server::read_server_ipv4_addr(int socket_fd)
 string	Server::read_client_ipv4_addr(struct sockaddr& client_addr)
 {
 	struct in_addr ip_addr = ((struct sockaddr_in*) &client_addr)->sin_addr;
-	char ip_str[INET_ADDRSTRLEN];
-
-	inet_ntop(AF_INET, &ip_addr, ip_str, INET_ADDRSTRLEN);
+	string ip_str = inet_ntoa(ip_addr);
 	std::cout << "New client IP address: " << ip_str << std::endl;
 	return string(ip_str);
 }
@@ -225,14 +222,7 @@ int	Server::read_from_existing_client(int client_fd)
 	std::cout << "get_read_buffer: " << client.get_read_buffer() << std::endl;
 
 	if (nbytes <= 0)
-	{
-		if (nbytes == 0) // Connection closed
-			std::cout << "pollserver: socket " << client_fd << " hung up." << std::endl;
-		else // some other error
-			std::cout << "Error on receive" << std::endl;
-		close(client_fd); // Bye!
-		return (nbytes);
-	}
+		return remove_client(client_fd, nbytes);
 	while (client.get_read_buffer().find("\r\n") != std::string::npos)
 	{
 		std::cout << "Found CRLF in message, continuing" << std::endl;
@@ -255,6 +245,25 @@ void	Server::add_client	(int client_fd,
 {
 	Client		new_client(client_fd, client_ip_v4_addr, server_ipv4_addr);
 	_clients.insert(std::pair<int, Client>(client_fd, new_client));
+}
+
+int		Server::remove_client(int client_fd, int bytes_read)
+{
+	if (bytes_read == 0) // Connection closed
+		std::cout << "pollserver: socket " << client_fd << " hung up." << std::endl;
+	else // some other error
+		std::cout << "Error on receive" << std::endl;
+	close(client_fd); // Bye!
+	_clients.erase(client_fd);
+	for (std::vector<pollfd>::iterator it = _pollfds.begin(); it != _pollfds.end(); it++)
+	{
+		if (it->fd == client_fd)
+		{
+			_pollfds.erase(it);
+			break;
+		}
+	}
+	return (bytes_read);
 }
 
 
