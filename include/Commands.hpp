@@ -33,7 +33,7 @@ class Commands
 		static int	exec_topic(Server *server, Message *msg);
 		static int	exec_who(Server *server, Message *msg);
 		static int	exec_mode(Server *server, Message *msg);
-		static void	invite(Server *server, std::string channel_name, std::string nickname);
+		//static void	invite(Server *server, std::string channel_name, std::string nickname);
 		static bool	is_valid_nickname(std::string name);
 		static bool	is_valid_username(std::string name);
 		static bool	is_valid_channel_name(std::string channel_name);

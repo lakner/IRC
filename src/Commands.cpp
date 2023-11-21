@@ -131,7 +131,7 @@ int Commands::exec_who(Server *server, Message *msg)
 	}
 	response += " :1";
 	msg->send_to(sender, response);
-	response = sender->get_server_string() + " " + RPL_ENDOFWHO + sender->get_nickname();
+	response = sender->get_server_string() + " " + RPL_ENDOFWHO + " " + sender->get_nickname();
 	response += " " + channel_name + " :End of WHO list";
 	msg->send_to(sender, response);
 	return 0;
@@ -227,14 +227,14 @@ int	Commands::exec_kick(Server *server, Message *msg)
 	else if (!ch.client_in_channel(server->get_client(nick_to_kick)))
 	{
 		response += string(ERR_USERNOTINCHANNEL) + " " + sender_nick + " ";
-		response += nick_to_kick + " " + channel_name + " :They aren't on that channel";
+		response += nick_to_kick + " " + channel_name + " :They are not on that channel";
 	}
-	else if (!ch.allowed_to_kick(sender->get_nickname()))
+	else if (!ch.is_operator(sender_nick))
 	{
-		response += string(ERR_CHANOPRIVSNEEDED) + " " + sender_nick + " " + nick_to_kick;
-		response += " " + channel_name + " :You're not a channel operator";
+		response += string(ERR_CHANOPRIVSNEEDED) + " " + sender_nick;
+		response += " " + channel_name + " :You must be a channel half-operator";
 	}
-	else // we can kick the user
+	else
 	{
 		response = ":" + sender->get_full_client_identifier() + " KICK " + channel_name;
 		if (reason.empty())
@@ -254,25 +254,25 @@ int	Commands::exec_invite(Server *server, Message *msg)
 	Client				*sender = msg->get_sender();
 	string				response = sender->get_server_string() + " ";
 	std::string			sender_nick = sender->get_nickname();
-	std::string			reason = "";
+	//std::string			reason = ""; //there is no reason in invite
 	Client& client = *(msg->get_sender());
-	Client& invited = server->get_client(nickname);
 
 	ss >> nickname >> channel_name;
-	if (channel_name == nickname)
-	{
-		if (msg->get_payload().find(":") != std::string::npos)
-			nickname = msg->get_payload().substr(msg->get_payload().find(":") + 1);
-	}
-	else
-	{
-		if (msg->get_payload().find(":") != std::string::npos)
-			reason = msg->get_payload().substr(msg->get_payload().find(":"));
-	}
+	// what is this doing??
+	// if (channel_name == nickname)
+	// {
+	// 	if (msg->get_payload().find(":") != std::string::npos)
+	// 		nickname = msg->get_payload().substr(msg->get_payload().find(":") + 1);
+	// }
+	// else
+	// {
+	// 	if (msg->get_payload().find(":") != std::string::npos)
+	// 		reason = msg->get_payload().substr(msg->get_payload().find(":"));
+	// }
 	if (nickname.empty() || channel_name.empty())
 	{
 		response += std::string(ERR_NEEDMOREPARAMS) + " " + sender_nick + " ";
-		response += channel_name + " :No channel or user specified";
+		response += channel_name + " :No channel or user specified: ";
 		return (msg->send_to(&client, response));
 	}
 	else if(!server->channel_exists(channel_name))
@@ -283,38 +283,34 @@ int	Commands::exec_invite(Server *server, Message *msg)
 
 	Channel &ch = server->get_channel(channel_name);
 	std::cout << "INVITE: nick_to_invite: " << nickname << std::endl;
-
 	if (!server->nickname_exists(nickname))
 	{
 		response += std::string(ERR_NOSUCHNICK) + " " + sender_nick + " ";
 		response += nickname + " " + channel_name + " :No such nick";
 	}
-	else if (!ch.allowed_to_invite(client.get_nickname()))
+	else if (ch.client_in_channel((server->get_client(nickname))))
 	{
-		response += std::string(ERR_CHANOPRIVSNEEDED) + " " + sender_nick + " " + nickname;
-		response += " " + channel_name + " :You're not a channel operator";
+		response += std::string(ERR_USERONCHANNEL) + " " + sender_nick + " " + nickname;
+		response += " " + channel_name + " :is already in channel";
 	}
 	else if (!ch.client_in_channel(*sender))
 	{
 		response += std::string(ERR_NOTONCHANNEL) + " " + sender_nick + " " + nickname;
-		response += " " + channel_name + " :You're not a member of the channel";
+		response += " " + channel_name + " :You're not on that channel";
 	}
-	else if (ch.client_in_channel(invited))
+	else if (!ch.is_operator(sender_nick))
 	{
-		response += std::string(ERR_USERONCHANNEL) + " " + sender_nick + " " + nickname;
-		response += " " + channel_name + " :User already in channel";
+		response += std::string(ERR_CHANOPRIVSNEEDED) + " " + sender_nick;
+		response += " " + channel_name + " :You must be a channel half-operator";
 	}
 	else
 	{
-		response = ":" + client.get_full_client_identifier() + " INVITE " + channel_name;
-		if (reason.empty())
-			response += " " + nickname + " :" + sender_nick;
-		else
-			response += " " + nickname + " " + reason;
-		msg->send_to(&(server->get_client(nickname)), response);
-		invite(server, channel_name, nickname);
+		response += std::string(RPL_INVITING) + " " + sender_nick + " " + nickname + " :" + channel_name;
+		//ch.invite(&(server->get_client(nickname)));
+		msg->send_to(&(server->get_client(nickname)), ":" + client.get_full_client_identifier() \
+														+ " INVITE " + nickname + " :" + channel_name);
 	}
-	return (msg->send_to(&client, response));
+	return (msg->send_to(sender, response));
 }
 
 int	Commands::exec_ping(Message *msg)
@@ -567,20 +563,20 @@ int	Commands::exec_privmsg(Server *server, Message *msg)
 }
 
 
-//invite a user to a channel
-void	Commands::invite(Server *server, std::string channel_name, std::string nickname)
-{
-	if (server->channel_exists(channel_name))
-	{
-		Channel &ch = server->get_channel(channel_name);
-		static std::map<const int, Client>& clientMap = server->get_clients();
-		std::map<const int, Client>::iterator it = clientMap.begin();
+// //invite a user to a channel
+// void	Commands::invite(Server *server, std::string channel_name, std::string nickname)
+// {
+// 	if (server->channel_exists(channel_name))
+// 	{
+// 		Channel &ch = server->get_channel(channel_name);
+// 		static std::map<const int, Client>& clientMap = server->get_clients();
+// 		std::map<const int, Client>::iterator it = clientMap.begin();
 
-		for (; it != clientMap.end(); it++) {
-			Client *cl = &it->second;
+// 		for (; it != clientMap.end(); it++) {
+// 			Client *cl = &it->second;
 
-			if (cl->get_nickname() == nickname)
-				ch.add_user(cl, ch.get_password());
-		}
-	}
-}
+// 			if (cl->get_nickname() == nickname)
+// 				ch.add_user(cl, ch.get_password());
+// 		}
+// 	}
+// }

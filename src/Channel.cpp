@@ -200,17 +200,17 @@ bool	Channel::is_operator(std::string nickname)
 	return (false);
 }
 
-bool	Channel::allowed_to_invite(std::string nickname) //change
-{
-	if (_invite_only)
-		return(is_operator(nickname));
-	return (true);
-}
+// bool	Channel::allowed_to_invite(std::string nickname) //change
+// {
+// 	if (_invite_only)
+// 		return(is_operator(nickname));
+// 	return (true);
+// }
 
-bool	Channel::allowed_to_kick(std::string nickname) //change
-{
-	return(is_operator(nickname));
-}
+// bool	Channel::allowed_to_kick(std::string nickname) //change
+// {
+// 	return(is_operator(nickname));
+// }
 
 std::string	Channel::get_channel_name( void )
 {
@@ -264,6 +264,12 @@ void	Channel::kick(std::string nickname)
 			break ;
 		}
 	}
+}
+
+
+void	Channel::invite(Client *client)
+{
+	add_user(client, _password);
 }
 
 // std::string Channel::add_mode_change(char mode, bool *sign, bool mode_stat)

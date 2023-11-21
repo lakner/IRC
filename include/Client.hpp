@@ -27,7 +27,7 @@ class	Client
 		void			clear_read_buffer(void);
 		void			clear_write_buffer(void);
 		std::string		get_server_string();
-		bool			is_authd();
+		int			is_authd();
 		void			authenticate(int status);
 		int				send_all_in_write_buffer();
 		void			send_to_all_in_my_channels(Server *server, std::string response);
