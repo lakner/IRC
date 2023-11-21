@@ -131,7 +131,7 @@ int Commands::exec_who(Server *server, Message *msg)
 	}
 	response += " :1";
 	msg->send_to(sender, response);
-	response = sender->get_server_string() + " " + RPL_ENDOFWHO + sender->get_nickname();
+	response = sender->get_server_string() + " " + RPL_ENDOFWHO + " " + sender->get_nickname();
 	response += " " + channel_name + " :End of WHO list";
 	msg->send_to(sender, response);
 	return 0;
@@ -424,7 +424,9 @@ int Commands::exec_user(Message *msg)
 {
 	Client *sender = msg->get_sender();
 
-	if (!sender->get_username().empty() && !sender->get_nickname().empty())
+	if (sender->get_nickname().empty())
+		return -1;
+	if (!sender->get_username().empty())
 	{
 		msg->send_to(sender, sender->get_server_string() + string(ERR_ALREADYREGISTRED) + " " + sender->get_nickname() + " :You may not reregister");
 		return (atoi(ERR_ALREADYREGISTRED));
@@ -437,14 +439,11 @@ int Commands::exec_user(Message *msg)
 	std::cout << "USER: username: " << username << " unused: " << unused << " realname: " << realname << std::endl;
 	sender->set_username(username);
 
-	if (!sender->get_nickname().empty())
-	{
-		msg->get_sender()->authenticate(2);
-		string response = ":127.0.0.1 " + string(RPL_WELCOME) + " " + msg->get_sender()->get_nickname();
-		response += " :Welcome to the Internet Relay Network ";
-		response += sender->get_full_client_identifier();
-		msg->send_to(sender, response);
-	}	
+	msg->get_sender()->authenticate(2);
+	string response = ":127.0.0.1 " + string(RPL_WELCOME) + " " + msg->get_sender()->get_nickname();
+	response += " :Welcome to the Internet Relay Network ";
+	response += sender->get_full_client_identifier();
+	msg->send_to(sender, response);
 	return 0;
 }
 

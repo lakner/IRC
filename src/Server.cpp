@@ -228,10 +228,7 @@ int	Server::read_from_existing_client(int client_fd)
 	return(nbytes);
 }
 
-
-void	Server::add_client	(int client_fd, 
-							std::string client_ip_v4_addr,
-							std::string server_ipv4_addr)
+void	Server::add_client	(int client_fd, std::string client_ip_v4_addr, std::string server_ipv4_addr)
 {
 	Client		new_client(client_fd, client_ip_v4_addr, server_ipv4_addr);
 	_clients.insert(std::pair<int, Client>(client_fd, new_client));

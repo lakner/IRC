@@ -63,7 +63,7 @@ void	Client::clear_read_buffer(void)
 		_read_buffer.clear();
 }
 
-bool	Client::is_authd()
+int		Client::is_authd()
 {
 	return _authenticated;
 }
