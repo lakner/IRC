@@ -29,6 +29,7 @@
 
 #define RPL_CHANNELMODEIS "324"
 #define ERR_NEEDMOREPARAMS "461"
+#define RPL_INVITING "341"
 
 //#define HOSTNAME ": snusnufoofoo "
 
