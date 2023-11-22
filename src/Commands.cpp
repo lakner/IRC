@@ -490,6 +490,13 @@ int Commands::exec_join(Server *server, Message *msg)
 		}
 
 		// join the channel
+		if (channels[vchannels[i]].client_in_channel(*sender))
+		{
+			error = std::string(ERR_USERONCHANNEL) + " " + sender->get_nickname();
+			error += " " + vchannels[i] + " :is already in channel";
+			msg->send_from_server(sender, error);
+			return 0;
+		}
 		if (i < vpasswords.size() && !channels[vchannels[i]].get_invite_only())
 			ret = channels[vchannels[i]].add_user(sender, vpasswords[i]);
 		else if (!channels[vchannels[i]].get_invite_only())
