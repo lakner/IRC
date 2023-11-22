@@ -71,7 +71,7 @@ int Commands::exec_mode(Server *server, Message *msg)
 		return (0);
 	}
 	else if (!server->get_channel(channel_name).is_operator(sender->get_nickname()))
-		msg->send_from_server(sender, sender->get_server_string() + " " + string(ERR_CHANOPRIVSNEEDED) + " " + ch.get_channel_name() + " :You must be a channel half-operator";);
+		msg->send_from_server(sender, sender->get_server_string() + " " + string(ERR_CHANOPRIVSNEEDED) + " " + channel_name + " :You must be a channel half-operator");
 	for (std::string::size_type i = 0; i < modes.length(); i++)
 	{
 		if (modes[i] == '+')
