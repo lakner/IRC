@@ -32,7 +32,7 @@ int	Commands::execute(Server *server, Message *msg)
 		return (exec_nick(msg, server));
 	else if (command == "USER" && msg->get_sender()->is_authd() == 1)
 		return (exec_user(msg));
-	if (!msg->get_sender()->is_authd())
+	if (msg->get_sender()->is_authd() != 2)
 		return (-1);
 	else if (command == "PRIVMSG")
 		return(exec_privmsg(server, msg));
@@ -256,21 +256,9 @@ int	Commands::exec_invite(Server *server, Message *msg)
 	Client				*sender = msg->get_sender();
 	string				response = sender->get_server_string() + " ";
 	std::string			sender_nick = sender->get_nickname();
-	//std::string			reason = ""; //there is no reason in invite
 	Client& client = *(msg->get_sender());
 
 	ss >> nickname >> channel_name;
-	// what is this doing??
-	// if (channel_name == nickname)
-	// {
-	// 	if (msg->get_payload().find(":") != std::string::npos)
-	// 		nickname = msg->get_payload().substr(msg->get_payload().find(":") + 1);
-	// }
-	// else
-	// {
-	// 	if (msg->get_payload().find(":") != std::string::npos)
-	// 		reason = msg->get_payload().substr(msg->get_payload().find(":"));
-	// }
 	if (nickname.empty() || channel_name.empty())
 	{
 		response += std::string(ERR_NEEDMOREPARAMS) + " " + sender_nick + " ";
