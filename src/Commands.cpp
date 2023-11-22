@@ -70,6 +70,8 @@ int Commands::exec_mode(Server *server, Message *msg)
 								+ " " + channel_name + " :" + server->get_channel(channel_name).get_modes());
 		return (0);
 	}
+	else if (!server->get_channel(channel_name).is_operator(sender->get_nickname()))
+		msg->send_from_server(sender, sender->get_server_string() + " " + string(ERR_CHANOPRIVSNEEDED) + " " + ch.get_channel_name() + " :You must be a channel half-operator";);
 	for (std::string::size_type i = 0; i < modes.length(); i++)
 	{
 		if (modes[i] == '+')
@@ -168,7 +170,7 @@ int	Commands::exec_topic(Server *server, Message *msg)
 	if (!ch.client_in_channel(*sender))		// client needs to be in channel
 		response += sender->get_server_string() + " " + string(ERR_NOTONCHANNEL) + " " + ch.get_channel_name() + " :You're not on that channel";
 	else if (!ch.allowed_to_set_topic(sender->get_nickname()))
-		response += sender->get_server_string() + " " + string(ERR_CHANOPRIVSNEEDED) + " " + ch.get_channel_name() + " :You're not a channel operator";
+		response += sender->get_server_string() + " " + string(ERR_CHANOPRIVSNEEDED) + " " + ch.get_channel_name() + " :You must be a channel half-operator";
 	else if (new_channel_topic.empty())		// no second parameter or it does not start with ':' - return the topic
 	{	
 		response += sender->get_server_string() + " " + string(RPL_TOPIC) + " " + sender->get_nickname() + " " ;
