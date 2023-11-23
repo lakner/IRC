@@ -364,12 +364,12 @@ std::string	Channel::set_mode(char mode, bool mode_stat, std::stringstream *para
 				} catch (const std::out_of_range& e) {
    					_userlimit = 9999;
 				}
-				send_to_all_in_channel(mode_message + get_channel_name() + " +l :" + std::to_string(_userlimit));
+				send_to_all_in_channel(mode_message + " +l :" + std::to_string(_userlimit));
 			}
 			else
 			{
 				_userlimit = 9999;
-        		send_to_all_in_channel(mode_message + get_channel_name() + " :-l");
+        		send_to_all_in_channel(mode_message + " :-l");
 			}
 			break ;
 	}
