@@ -251,6 +251,11 @@ int	Commands::exec_kick(Server *server, Message *msg)
 	return (msg->send_to(sender, response));
 }
 
+//void create_channel(std::string channel_name, Server *)
+//{
+
+//}
+
 int	Commands::exec_invite(Server *server, Message *msg)
 {
 	std::stringstream	ss (msg->get_payload());
