@@ -3,13 +3,13 @@
 #include "Message.hpp"
 #include "Numeric.hpp"
 
-Channel::Channel(): _channel_name(""), _password(""), _userlimit(9999), _invite_only(false), _topic_change(false)
+Channel::Channel(): _channelusers(0), _channel_name(""), _password(""), _userlimit(9999), _invite_only(false), _topic_change(false)
 {
 
 }
 
 Channel::Channel(std::string name, std::string pass)
-	:_channel_name(name), _password(pass) , _userlimit(9999), _invite_only(false), _topic_change(false)
+	: _channelusers(0),_channel_name(name), _password(pass) , _userlimit(9999), _invite_only(false), _topic_change(false)
 {
 
 }
@@ -27,6 +27,7 @@ std::string	Channel::add_user(Client *client, std::string password)
 		// first user automatically is an operator
 		if (_client_list.empty())
 			add_operator(client);
+		std::cout << "LIMIT OF USERS: " << _userlimit << " CURRENT USERS: " << _channelusers << std::endl;
 		//_client_list.insert(std::pair<std::string, Client*>(client->get_nickname(), client));
 		if (_channelusers == _userlimit)
 			return (ERR_CHANNELISFULL);
