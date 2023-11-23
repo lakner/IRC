@@ -53,6 +53,8 @@ int		Channel::remove_user(Client *client)
 	} else {
 		return (-1);
 	}
+	remove_operator(client);
+	_channelusers --;
 	notify_user_exit(client);
 	send_topic(client);
 	send_user_list(client);
@@ -263,7 +265,6 @@ void	Channel::kick(string nickname)
 		if (cl->get_nickname() == nickname)
 		{
 			remove_user(cl);
-			remove_operator(cl);
 			break ;
 		}
 	}

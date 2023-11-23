@@ -140,7 +140,7 @@ int	Server::run()
 			{
 				if (it->fd == this->_server_sock_fd)
 					new_client_connection();
-				else if (read_from_existing_client(it->fd) <= 0)
+				else if (read_from_existing_client(it->fd, it) <= 0)
 					continue ;
 			}
 			if(it->revents & POLLOUT)
@@ -198,7 +198,7 @@ string	Server::read_client_ipv4_addr(struct sockaddr& client_addr)
 	return string(ip_str);
 }
 
-int	Server::read_from_existing_client(int client_fd)
+int	Server::read_from_existing_client(int client_fd, std::vector< pollfd >::iterator &it)
 {
 	char	buf[256];
 	int		nbytes = 0;
@@ -212,7 +212,7 @@ int	Server::read_from_existing_client(int client_fd)
 	std::cout << "get_read_buffer: " << client.get_read_buffer() << std::endl;
 
 	if (nbytes <= 0)
-		return remove_client(client_fd, nbytes);
+		return remove_client(client_fd, nbytes, it);
 	while (client.get_read_buffer().find("\r\n") != string::npos)
 	{
 		std::cout << "Found CRLF in message, continuing" << std::endl;
@@ -234,7 +234,7 @@ void	Server::add_client	(int client_fd, string client_ip_v4_addr, string server_
 	_clients.insert(std::pair<int, Client>(client_fd, new_client));
 }
 
-int		Server::remove_client(int client_fd, int bytes_read)
+int		Server::remove_client(const int client_fd, int bytes_read, std::vector< pollfd >::iterator &it)
 {
 	if (bytes_read == 0) // Connection closed
 		std::cout << "pollserver: socket " << client_fd << " hung up." << std::endl;
@@ -242,14 +242,23 @@ int		Server::remove_client(int client_fd, int bytes_read)
 		std::cout << "Error on receive" << std::endl;
 	close(client_fd); // Bye!
 	_clients.erase(client_fd);
-	for (std::vector<pollfd>::iterator it = _pollfds.begin(); it != _pollfds.end(); it++)
+	
+	for (std::map<std::string, Channel>::iterator ch = _channels.begin(); ch != _channels.end(); ch++)
 	{
-		if (it->fd == client_fd)
-		{
-			_pollfds.erase(it);
-			break;
-		}
+		Client client;
+		client =_clients[client_fd];
+		if (ch->second.client_in_channel(client))
+			ch->second.remove_user(&client);
 	}
+	// for (std::vector<pollfd>::iterator it2 = _pollfds.begin(); it2 != _pollfds.end(); it2++)
+	// {
+	// 	if (it2->fd == client_fd)
+	// 	{
+			// it = _pollfds.erase(it2);
+	// 		break;
+	// 	}
+	// }
+	it = _pollfds.erase(it);
 	return (bytes_read);
 }
 
