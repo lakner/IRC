@@ -249,6 +249,11 @@ int	Commands::exec_kick(Server *server, Message *msg)
 	return (msg->send_to(sender, response));
 }
 
+//void create_channel(std::string channel_name, Server *)
+//{
+
+//}
+
 int	Commands::exec_invite(Server *server, Message *msg)
 {
 	std::stringstream	ss (msg->get_payload());
@@ -256,7 +261,8 @@ int	Commands::exec_invite(Server *server, Message *msg)
 	Client				*sender = msg->get_sender();
 	string				response = sender->get_server_string() + " ";
 	std::string			sender_nick = sender->get_nickname();
-	Client& client = *(msg->get_sender());
+	Client& 			client = *(msg->get_sender());
+	int					channel_exist = 1; //the channel existed before the invitation
 
 	ss >> nickname >> channel_name;
 	if (nickname.empty() || channel_name.empty())
@@ -267,8 +273,8 @@ int	Commands::exec_invite(Server *server, Message *msg)
 	}
 	else if(!server->channel_exists(channel_name))
 	{
-		response += std::string(ERR_NOSUCHCHANNEL) + " " + sender_nick + " " + channel_name + " :No such channel";
-		return (msg->send_to(&client, response));
+		server->add_channel(channel_name, "");
+		channel_exist = 0;
 	}
 
 	Channel &ch = server->get_channel(channel_name);
@@ -283,12 +289,12 @@ int	Commands::exec_invite(Server *server, Message *msg)
 		response += std::string(ERR_USERONCHANNEL) + " " + sender_nick + " " + nickname;
 		response += " " + channel_name + " :is already in channel";
 	}
-	else if (!ch.client_in_channel(*sender))
+	else if (!ch.client_in_channel(*sender) && channel_exist)
 	{
 		response += std::string(ERR_NOTONCHANNEL) + " " + sender_nick + " " + nickname;
 		response += " " + channel_name + " :You're not on that channel";
 	}
-	else if (!ch.is_operator(sender_nick))
+	else if (ch.get_invite_only() && !ch.is_operator(sender_nick))
 	{
 		response += std::string(ERR_CHANOPRIVSNEEDED) + " " + sender_nick;
 		response += " " + channel_name + " :You must be a channel half-operator";
