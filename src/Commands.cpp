@@ -73,6 +73,9 @@ int Commands::exec_mode(Server *server, Message *msg)
 								+ " " + channel_name + " :" + server->get_channel(channel_name).get_modes());
 		return (0);
 	}
+	else if (modes == "b")
+		return(msg->send_from_server(sender, string(RPL_ENDOFBANLIST) + " " + sender->get_nickname() + " "
+				+ channel_name + " :End of channel ban list"));
 	else if (!server->get_channel(channel_name).is_operator(sender->get_nickname()))
 		msg->send_from_server(sender, sender->get_server_string() + " " + string(ERR_CHANOPRIVSNEEDED) + " " + channel_name + " :You must be a channel half-operator");
 	for (string::size_type i = 0; i < modes.length(); i++)

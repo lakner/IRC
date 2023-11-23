@@ -9,6 +9,7 @@
 #define RPL_WHOREPLY "352"
 #define RPL_NAMREPLY "353"
 #define RPL_ENDOFNAMES "366"
+#define RPL_ENDOFBANLIST "368"
 #define ERR_NOSUCHNICK "401"
 #define ERR_NOSUCHCHANNEL "403"
 #define ERR_UNKNOWNCOMMAND "421"
@@ -30,7 +31,5 @@
 #define RPL_CHANNELMODEIS "324"
 #define ERR_NEEDMOREPARAMS "461"
 #define RPL_INVITING "341"
-
-//#define HOSTNAME ": snusnufoofoo "
 
 #endif
