@@ -59,6 +59,9 @@ int Commands::exec_mode(Server *server, Message *msg)
 	Client				*sender = msg->get_sender();
 
 	ss >> channel_name >> modes;
+
+	if(!server->channel_exists(channel_name))
+		return (msg->send_from_server(sender, std::string(ERR_NOSUCHCHANNEL) + " " + sender->get_nickname() + " " + channel_name + " :No such channel"));
 	if (channel_name[0] != '#')
 	{
 		msg->send_from_server(sender, string(ERR_NOSUCHNICK) + " " + sender->get_nickname() + " " + channel_name + " :No such nick");
