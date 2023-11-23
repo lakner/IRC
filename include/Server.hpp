@@ -60,7 +60,7 @@ class Server
 		std::string						read_client_ipv4_addr(int socket_fd);
 		std::string						read_server_ipv4_addr(int socket_fd);
 		int								remove_client(int client_fd, int bytes_read);
-		
+		int								remove_from_all_channels(Client *client);
 };
 
 #endif

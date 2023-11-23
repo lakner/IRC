@@ -240,8 +240,10 @@ int		Server::remove_client(int client_fd, int bytes_read)
 		std::cout << "pollserver: socket " << client_fd << " hung up." << std::endl;
 	else // some other error
 		std::cout << "Error on receive" << std::endl;
+	remove_from_all_channels(&get_client(client_fd));
 	close(client_fd); // Bye!
 	_clients.erase(client_fd);
+
 	for (std::vector<pollfd>::iterator it = _pollfds.begin(); it != _pollfds.end(); it++)
 	{
 		if (it->fd == client_fd)
@@ -288,4 +290,19 @@ bool	Server::nickname_exists(std::string nickname)
 			return true;
 	}
 	return false;
+}
+
+//remove the user from every channel
+int	Server::remove_from_all_channels(Client *client)
+{
+	std::map<std::string, Channel>::iterator it = _channels.begin();
+
+	for (; it != _channels.end(); it++)
+	{
+		Channel &ch = it->second;
+		ch.remove_user(client);
+		ch.remove_operator(client);
+		ch.send_to_all_in_channel(":" + client->get_full_client_identifier() + " QUIT " + ":Quit: KVIrc 5.0.0 Aria http://www.kvirc.net/");
+	}
+	return 0;
 }
