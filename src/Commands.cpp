@@ -499,7 +499,7 @@ int Commands::exec_join(Server *server, Message *msg)
 		if (channels[vchannels[i]].client_in_channel(*sender))
 		{
 			error = std::string(ERR_USERONCHANNEL) + " " + sender->get_nickname();
-			error += " " + vchannels[i] + " :is already in channel";
+			error += " " + sender->get_nickname() + " " + vchannels[i] + " :is already in channel";
 			msg->send_from_server(sender, error);
 			return 0;
 		}
