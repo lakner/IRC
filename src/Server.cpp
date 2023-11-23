@@ -11,31 +11,26 @@ Server::Server(char* port, char* password) : _port(port), _password(password)
 {
 }
 
-
 const string	Server::get_pass()
 {
 	return(_password);
 }
-
 
 std::map<const int, Client>&	Server::get_clients()
 {
 	return (_clients);
 }
 
-
 std::map<string, Channel>&	Server::get_channels()
 {
 	return(_channels);
 }
-
 
 Client&		Server::get_client(int client_fd)
 {
 	std::map<const int, Client>::iterator it = _clients.find(client_fd);
 	return (it->second);
 }
-
 
 Client&		Server::get_client(string client_name)
 {
@@ -61,7 +56,6 @@ Channel&	Server::get_channel(string name)
 	}
 	return it->second;
 }
-
 
 int	Server::prepare()
 {
@@ -143,13 +137,12 @@ int	Server::run()
 				else if (read_from_existing_client(it->fd, it) <= 0)
 					continue ;
 			}
-			if(it->revents & POLLOUT)
+			else if(it->revents & POLLOUT)	
 				get_client(it->fd).send_all_in_write_buffer();
 			it++;
 		}
 	}
 }
-
 
 void	Server::new_client_connection()
 {
@@ -241,18 +234,15 @@ int		Server::remove_client(const int client_fd, int bytes_read, std::vector< pol
 	else // some other error
 		std::cout << "Error on receive" << std::endl;
 	close(client_fd); // Bye!
-	
 	for (std::map<std::string, Channel>::iterator ch = _channels.begin(); ch != _channels.end(); ch++)
 	{
 		if (ch->second.client_in_channel(_clients[client_fd]))
 		 	ch->second.remove_user(&(_clients[client_fd]));
 	}
-
 	_clients.erase(client_fd);
 	it = _pollfds.erase(it);
 	return (bytes_read);
 }
-
 
 void Server::add_channel(string name, string pass)
 {
@@ -261,7 +251,6 @@ void Server::add_channel(string name, string pass)
 	else
 		std::cerr << "Server::add_channel: Trying to add a channel that already exists." << std::endl;
 }
-
 
 int	Server::channel_exists(string channel_name)
 {
@@ -275,7 +264,6 @@ int	Server::channel_exists(string channel_name)
 	}
 	return 0; // Nickname not found
 }
-
 
 bool	Server::nickname_exists(string nickname)
 {

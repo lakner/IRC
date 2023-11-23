@@ -56,7 +56,7 @@ int		Channel::remove_user(Client *client)
 	remove_operator(client);
 	_channelusers --;
 	notify_user_exit(client);
-	send_topic(client);
+	// send_topic(client);
 	send_user_list(client);
 	return 0;
 }
@@ -142,6 +142,7 @@ void	Channel::send_user_list(Client *client)
 	msg_content = string(RPL_ENDOFNAMES);
 	msg_content += " " + client->get_nickname();
 	msg_content += " " + _channel_name + " :End of /NAMES list";
+	
 	Message::send_from_server(client, msg_content);
 }
 

@@ -243,8 +243,10 @@ int	Commands::exec_kick(Server *server, Message *msg)
 			response += " " + nick_to_kick + " :" + sender_nick;
 		else
 			response += " " + nick_to_kick + " " + reason;
-		msg->send_to(&(server->get_client(nick_to_kick)), response);
+		ch.send_to_all_in_channel(response);
+		//msg->send_to(&(server->get_client(nick_to_kick)), response);
 		ch.kick(nick_to_kick);
+		return (0);
 	}
 	return (msg->send_to(sender, response));
 }

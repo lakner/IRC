@@ -120,6 +120,8 @@ string		Client::get_full_client_identifier()
 int	Client::send_all_in_write_buffer()
 {
 	string to_send = _write_buffer;
+	if (to_send.empty())
+		return 0;
 	int numbytes = send(_client_fd, to_send.c_str(), to_send.size(), 0);
 	if (numbytes == -1)
 		return numbytes;
