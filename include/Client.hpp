@@ -9,6 +9,7 @@ class Server;
 class	Client
 {
 	public:
+		Client();
 		Client(int client_fd, std::string client_ip4v_addr, std::string server_ipv4_addr);
 		~Client();
 

@@ -241,23 +241,14 @@ int		Server::remove_client(const int client_fd, int bytes_read, std::vector< pol
 	else // some other error
 		std::cout << "Error on receive" << std::endl;
 	close(client_fd); // Bye!
-	_clients.erase(client_fd);
 	
 	for (std::map<std::string, Channel>::iterator ch = _channels.begin(); ch != _channels.end(); ch++)
 	{
-		Client client;
-		client =_clients[client_fd];
-		if (ch->second.client_in_channel(client))
-			ch->second.remove_user(&client);
+		if (ch->second.client_in_channel(_clients[client_fd]))
+		 	ch->second.remove_user(&(_clients[client_fd]));
 	}
-	// for (std::vector<pollfd>::iterator it2 = _pollfds.begin(); it2 != _pollfds.end(); it2++)
-	// {
-	// 	if (it2->fd == client_fd)
-	// 	{
-			// it = _pollfds.erase(it2);
-	// 		break;
-	// 	}
-	// }
+
+	_clients.erase(client_fd);
 	it = _pollfds.erase(it);
 	return (bytes_read);
 }
