@@ -22,26 +22,26 @@ Client::~Client()
 
 void	Client::set_read_buffer(char *buffer)
 {
-	_read_buffer += std::string(buffer);
+	_read_buffer += string(buffer);
 }
 
 
-std::string	Client::get_read_buffer(void)
+string	Client::get_read_buffer(void)
 {
 	return (_read_buffer);
 }
 
-void	Client::set_write_buffer(std::string buffer)
+void	Client::set_write_buffer(string buffer)
 {
 	_write_buffer = buffer;
 }
 
-void	Client::append_write_buffer(std::string buffer)
+void	Client::append_write_buffer(string buffer)
 {
 	_write_buffer += buffer;
 }
 
-std::string	Client::get_write_buffer(void)
+string	Client::get_write_buffer(void)
 {
 	return (_write_buffer);
 }
@@ -53,8 +53,8 @@ void	Client::clear_write_buffer(void)
 
 void	Client::clear_read_buffer(void)
 {
-	std::string::size_type pos = _read_buffer.find("\r\n");
-	if (pos != std::string::npos)
+	string::size_type pos = _read_buffer.find("\r\n");
+	if (pos != string::npos)
 	{
 		_read_buffer = _read_buffer.substr(pos + 2, _read_buffer.size());
 		std::cout << "Client::clear_read_buffer, new read buffer: " << _read_buffer << std::endl;
@@ -78,38 +78,38 @@ int		Client::get_client_fd()
 	return (_client_fd);
 }
 
-std::string		Client::get_nickname()
+string		Client::get_nickname()
 {
 	return (_nickname);
 }
 
-void		Client::set_nickname(std::string name)
+void		Client::set_nickname(string name)
 {
 	_nickname = name;
 	_full_client_identifier =
 		_nickname + "!" + _username + "@" + _client_ipv4_addr;
 }
 
-std::string		Client::get_username()
+string		Client::get_username()
 {
 	return (_username);
 }
 
-void		Client::set_username(std::string name)
+void		Client::set_username(string name)
 {
 	_username = name;
 	_full_client_identifier =
 		_nickname + "!~" + _username + "@" + _client_ipv4_addr;
 }
 
-std::string		Client::get_full_client_identifier()
+string		Client::get_full_client_identifier()
 {
 	return(_full_client_identifier);
 }
 
 int	Client::send_all_in_write_buffer()
 {
-	std::string to_send = _write_buffer;
+	string to_send = _write_buffer;
 	int numbytes = send(_client_fd, to_send.c_str(), to_send.size(), 0);
 	if (numbytes == -1)
 		return numbytes;
@@ -127,8 +127,8 @@ string Client::get_server_string()
 
 void Client::send_to_all_in_my_channels(Server *server, string response)
 {
-	std::map<std::string, Channel>& channels = server->get_channels();
-	std::map<std::string, Channel>::iterator it = channels.begin();
+	std::map<string, Channel>& channels = server->get_channels();
+	std::map<string, Channel>::iterator it = channels.begin();
 
 	for (; it != channels.end(); it++) 
 	{

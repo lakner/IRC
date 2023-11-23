@@ -1,7 +1,9 @@
 #include "Message.hpp"
 #include "Numeric.hpp"
 
-Message::Message(Client *sender, std::string content) : _sender(sender),
+using std::string;
+
+Message::Message(Client *sender, string content) : _sender(sender),
 														_raw_content(content),
 														_recpnt(NULL),
 														_command("")
@@ -18,22 +20,22 @@ Client*	Message::get_sender()
 	return(_sender);
 }
 
-Client* Message::get_rcpnt()
+Client*	Message::get_rcpnt()
 {
 	return(_recpnt);
 }
 
-std::string Message::get_command()
+string	Message::get_command()
 {
 	return(_command);
 }
 
-std::string	Message::get_payload()
+string	Message::get_payload()
 {
 	return(_payload);
 }
 
-std::string	Message::get_raw_content()
+string	Message::get_raw_content()
 {
 	return(_raw_content);
 }
@@ -41,8 +43,8 @@ std::string	Message::get_raw_content()
 int	Message::parse()
 {
 	// strip the "\r\n"
-	if (_raw_content.find("\r\n") != std::string::npos)
-		_raw_content = _raw_content.substr(0, _raw_content.size() - std::string("\r\n").size());
+	if (_raw_content.find("\r\n") != string::npos)
+		_raw_content = _raw_content.substr(0, _raw_content.size() - string("\r\n").size());
 	std::cout << "Message::parse:: _raw_content after stripping CRLF: " << _raw_content << std::endl;
 	if (_raw_content.rfind("CAP", 0) == 0)
 		_command = "CAP";
@@ -73,15 +75,15 @@ int	Message::parse()
 	else
 	{
 		std::stringstream ss(_raw_content);
-		std::string first_word;
+		string first_word;
 
 		ss >> first_word;
 		send_to(_sender, _sender->get_server_string() + " " + ERR_UNKNOWNCOMMAND + " " + get_sender()->get_nickname() + " " + first_word + " :Unknown command");
 		return -1;
 	}
-	if (!_command.empty() && _raw_content.find(_command) != std::string::npos)
+	if (!_command.empty() && _raw_content.find(_command) != string::npos)
 	{
-		_payload = _raw_content.substr(_command.size(), std::string::npos);
+		_payload = _raw_content.substr(_command.size(), string::npos);
 		// remove leading whitespaces
 		if (!_payload.empty() && _payload.find_first_not_of(" \n\r\t\f\v") < _payload.size())
 			_payload = _payload.substr(_payload.find_first_not_of(" \n\r\t\f\v"));
@@ -98,27 +100,16 @@ int	Message::sendmsg()
 }
 
 
-int	Message::send_to(Client *new_recpnt, std::string content)
+int	Message::send_to(Client *new_recpnt, string content)
 {
-	// char hostname[64] = ":127.0.0.1";
-	// //gethostname(hostname, sizeof(hostname));
-	// content = std::string(":") + hostname + " " + content;
 	content += "\r\n";
 	new_recpnt->append_write_buffer(content);
-	// if (send(new_recpnt->get_client_fd(), (content + "\r\n").c_str(), content.size() + 2, 0) == -1)
-	// {
-	// 	std::cout << "Error sending with send()." << std::endl;
-	// 	throw "Error sending.";
-	// 	return(-1);
-	// }
 	std::cout << "SENDING BACK TO CLIENT, put in write buffer: " << content << std::endl;
 	return (0);
 }
 
-int	Message::send_from_server(Client *new_recpnt, std::string content)
+int	Message::send_from_server(Client *new_recpnt, string content)
 {
-	//char hostname[64] = "127.0.0.1";
-	// //gethostname(hostname, sizeof(hostname));
 	content = new_recpnt->get_server_string() + content;
 	return(send_to(new_recpnt, content));
 }

@@ -3,12 +3,14 @@
 #include "Message.hpp"
 #include "Numeric.hpp"
 
+using std::string;
+
 Channel::Channel(): _channelusers(0), _channel_name(""), _password(""), _userlimit(9999), _invite_only(false), _topic_change(false)
 {
 
 }
 
-Channel::Channel(std::string name, std::string pass)
+Channel::Channel(string name, string pass)
 	: _channelusers(0),_channel_name(name), _password(pass) , _userlimit(9999), _invite_only(false), _topic_change(false)
 {
 
@@ -20,7 +22,7 @@ Channel::~Channel()
 }
 
 //if client already exist in a channel just notify
-std::string	Channel::add_user(Client *client, std::string password)
+string	Channel::add_user(Client *client, string password)
 {
 	if (password == this->_password)
 	{
@@ -28,7 +30,7 @@ std::string	Channel::add_user(Client *client, std::string password)
 		if (_client_list.empty())
 			add_operator(client);
 		std::cout << "LIMIT OF USERS: " << _userlimit << " CURRENT USERS: " << _channelusers << std::endl;
-		//_client_list.insert(std::pair<std::string, Client*>(client->get_nickname(), client));
+		//_client_list.insert(std::pair<string, Client*>(client->get_nickname(), client));
 		if (_channelusers == _userlimit)
 			return (ERR_CHANNELISFULL);
 		_client_list[client->get_nickname()] = client;
@@ -44,8 +46,8 @@ std::string	Channel::add_user(Client *client, std::string password)
 //removes a client form the client list of the channel
 int		Channel::remove_user(Client *client)
 {
-	std::string keyToRemove = client->get_nickname();
-	std::map<std::string, Client*>::iterator it = _client_list.find(keyToRemove);
+	string keyToRemove = client->get_nickname();
+	std::map<string, Client*>::iterator it = _client_list.find(keyToRemove);
 	if (it != _client_list.end()) {
 		_client_list.erase(it);
 	} else {
@@ -66,8 +68,8 @@ int		Channel::add_operator(Client *client)
 //removes a client form the operator list of the channel
 int		Channel::remove_operator(Client *client)
 {
-	std::string keyToRemove = client->get_nickname();
-	std::map<std::string, Client*>::iterator it = _operator_list.find(keyToRemove);
+	string keyToRemove = client->get_nickname();
+	std::map<string, Client*>::iterator it = _operator_list.find(keyToRemove);
 
 	if (it != _operator_list.end())
 	{
@@ -81,29 +83,29 @@ int		Channel::remove_operator(Client *client)
 
 void	Channel::notify_user_joined(Client *client)
 {
-	std::string content = ":" + client->get_full_client_identifier();
+	string content = ":" + client->get_full_client_identifier();
 	content += " JOIN " + _channel_name;
 	send_to_all_in_channel(content);
 }
 
 void	Channel::notify_user_exit(Client *client)
 {
-	std::string content = ":" + client->get_full_client_identifier();
+	string content = ":" + client->get_full_client_identifier();
 	content += " EXIT " + _channel_name;
 	send_to_all_in_channel(content);
 }
 
 // void	Channel::notify_user_is_operator(Client *client)
 // {
-// 	std::string content = ":" + client->get_full_client_identifier();
+// 	string content = ":" + client->get_full_client_identifier();
 // 	content += " MODE " + _channel_name + " +o " + client->get_nickname();
 // 	send_to_all_in_channel(content);
 // }
 
 // void	Channel::notify_mode_changed(Client *client)
 // {
-// 	std::map<std::string, Client*>::iterator it;
-// 	std::string content = ":" + client->get_full_client_identifier();
+// 	std::map<string, Client*>::iterator it;
+// 	string content = ":" + client->get_full_client_identifier();
 // 	content += " MODE " + _channel_name + " +o";
 // 	for (it = _client_list.begin();	it != _client_list.end(); it++)
 // 		Message::send_to(it->second, content);
@@ -111,11 +113,11 @@ void	Channel::notify_user_exit(Client *client)
 
 void	Channel::send_topic(Client *client)
 {
-	std::string msg_content;
+	string msg_content;
 	if (_topic.empty())
-		msg_content = std::string(RPL_NOTOPIC);
+		msg_content = string(RPL_NOTOPIC);
 	else
-		msg_content = std::string(RPL_TOPIC);
+		msg_content = string(RPL_TOPIC);
 	msg_content += " " + client->get_nickname();
 	msg_content += " " + _channel_name + " :" + _topic;
 	Message::send_from_server(client, msg_content);
@@ -123,11 +125,11 @@ void	Channel::send_topic(Client *client)
 
 void	Channel::send_user_list(Client *client)
 {
-	std::string msg_content = std::string(RPL_NAMREPLY); 
+	string msg_content = string(RPL_NAMREPLY); 
 	msg_content += " " + client->get_nickname();
 	msg_content += " = " + _channel_name + " :"; //add @ before operator name
 	
-	std::map<std::string, Client*>::iterator it;
+	std::map<string, Client*>::iterator it;
 	for (it = _client_list.begin(); it != _client_list.end(); it++)
 	{
 		if (is_operator(it->first))
@@ -135,15 +137,15 @@ void	Channel::send_user_list(Client *client)
 		msg_content += it->first + " ";
 	}
 	Message::send_from_server(client, msg_content);
-	msg_content = std::string(RPL_ENDOFNAMES);
+	msg_content = string(RPL_ENDOFNAMES);
 	msg_content += " " + client->get_nickname();
 	msg_content += " " + _channel_name + " :End of /NAMES list";
 	Message::send_from_server(client, msg_content);
 }
 
-int Channel::send_to_all_in_channel(std::string content)
+int Channel::send_to_all_in_channel(string content)
 {
-	std::map<std::string, Client*>::iterator it;
+	std::map<string, Client*>::iterator it;
 	for (it = _client_list.begin(); it != _client_list.end(); it++)
 	{
 		std::cout << "send_to_all_in_channel: Iterating over client list. Current client: " << it->second->get_nickname() << std::endl;
@@ -152,9 +154,9 @@ int Channel::send_to_all_in_channel(std::string content)
 	return 0;
 }
 
-int Channel::send_to_all_except(std::string content, Client& client)
+int Channel::send_to_all_except(string content, Client& client)
 {
-	std::map<std::string, Client*>::iterator it;
+	std::map<string, Client*>::iterator it;
 	for (it = _client_list.begin(); it != _client_list.end(); it++)
 	{
 		std::cout << "send_to_all_except: Iterating over client list. Current client: " << it->second->get_nickname() << std::endl;
@@ -167,7 +169,7 @@ int Channel::send_to_all_except(std::string content, Client& client)
 
 bool	Channel::client_in_channel(Client& client)
 {
-	std::map<std::string, Client*>::iterator it = _client_list.begin();
+	std::map<string, Client*>::iterator it = _client_list.begin();
 
 	for(; it != _client_list.end(); it++)
 	{
@@ -177,7 +179,7 @@ bool	Channel::client_in_channel(Client& client)
 	return false;
 }
 
-bool	Channel::allowed_to_set_topic(std::string nickname)
+bool	Channel::allowed_to_set_topic(string nickname)
 {
 	if (!_topic_change)
 		return (true);
@@ -188,9 +190,9 @@ bool	Channel::allowed_to_set_topic(std::string nickname)
 	return (false);
 }
 
-bool	Channel::is_operator(std::string nickname)
+bool	Channel::is_operator(string nickname)
 {
-	std::map<std::string, Client*>::iterator it = _operator_list.begin();
+	std::map<string, Client*>::iterator it = _operator_list.begin();
 
 	for (; it != _operator_list.end(); it++) {
 		Client *client = it->second;
@@ -201,45 +203,45 @@ bool	Channel::is_operator(std::string nickname)
 	return (false);
 }
 
-// bool	Channel::allowed_to_invite(std::string nickname) //change
+// bool	Channel::allowed_to_invite(string nickname) //change
 // {
 // 	if (_invite_only)
 // 		return(is_operator(nickname));
 // 	return (true);
 // }
 
-// bool	Channel::allowed_to_kick(std::string nickname) //change
+// bool	Channel::allowed_to_kick(string nickname) //change
 // {
 // 	return(is_operator(nickname));
 // }
 
-std::string	Channel::get_channel_name( void )
+string	Channel::get_channel_name( void )
 {
 	return (_channel_name);
 }
 
-std::map<std::string, Client*>&	Channel::get_users( void )
+std::map<string, Client*>&	Channel::get_users( void )
 {
 	return (_client_list);
 }
 
-std::map<std::string, Client*>&	Channel::get_operators( void )
+std::map<string, Client*>&	Channel::get_operators( void )
 {
 	return (_operator_list);
 }
 
 
-std::string	Channel::get_password( void )
+string	Channel::get_password( void )
 {
 	return (_password);
 }
 
-std::string	Channel::get_topic( void )
+string	Channel::get_topic( void )
 {
 	return (_topic);
 }
 
-void	Channel::set_topic( std::string new_topic )
+void	Channel::set_topic( string new_topic )
 {
 	this->_topic = new_topic;
 }
@@ -250,9 +252,9 @@ bool	Channel::get_invite_only()
 }
 
 
-void	Channel::kick(std::string nickname)
+void	Channel::kick(string nickname)
 {
-	std::map<std::string, Client*>::iterator it = _client_list.begin();
+	std::map<string, Client*>::iterator it = _client_list.begin();
 
 	for (; it != _client_list.end(); it++) 
 	{
@@ -273,10 +275,10 @@ void	Channel::invite(Client *client)
 	add_user(client, _password);
 }
 
-// std::string Channel::add_mode_change(char mode, bool *sign, bool mode_stat)
+// string Channel::add_mode_change(char mode, bool *sign, bool mode_stat)
 // {
 	
-// 	std::string ret;
+// 	string ret;
 
 // 	if (mode_stat != *sign)
 // 	{
@@ -291,18 +293,18 @@ void	Channel::invite(Client *client)
 // }
 
 
-std::string	Channel::set_mode(char mode, bool mode_stat, std::stringstream *param, Server *server, Message *msg)
+string	Channel::set_mode(char mode, bool mode_stat, std::stringstream *param, Server *server, Message *msg)
 {
-	std::string temp;
+	string temp;
 	Client		*sender = msg->get_sender();
-	std::string mode_message = ":" + sender->get_full_client_identifier() + " MODE " + _channel_name;
+	string mode_message = ":" + sender->get_full_client_identifier() + " MODE " + _channel_name;
 
 	if (mode == 'k' || mode == 'l' || mode == 'o')
 	{
 		*param >> temp;
 		if (temp.empty())
 		{
-			msg->send_from_server(sender, std::string(ERR_NEEDMOREPARAMS) + " " + sender->get_nickname() + " " + mode + ":");
+			msg->send_from_server(sender, string(ERR_NEEDMOREPARAMS) + " " + sender->get_nickname() + " " + mode + ":");
 			return ("");
 		}
 	}
@@ -340,7 +342,7 @@ std::string	Channel::set_mode(char mode, bool mode_stat, std::stringstream *para
 
 		case 'o':
 			if (!client_in_channel(server->get_client(temp)))
-				msg->send_from_server(sender, std::string(ERR_NOSUCHNICK) + " " + sender->get_nickname() + " " + temp + " :No such nick");
+				msg->send_from_server(sender, string(ERR_NOSUCHNICK) + " " + sender->get_nickname() + " " + temp + " :No such nick");
 			else if (mode_stat && !is_operator(temp))
 			{
 					add_operator(&server->get_client(temp));
@@ -376,9 +378,9 @@ std::string	Channel::set_mode(char mode, bool mode_stat, std::stringstream *para
 	return ("");
 }
 
-std::string Channel::get_modes()
+string Channel::get_modes()
 {
-	std::string modes = "+";
+	string modes = "+";
 
 	if (_invite_only)
 		modes += "i";

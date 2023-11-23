@@ -12,7 +12,7 @@ Server::Server(char* port, char* password) : _port(port), _password(password)
 }
 
 
-const std::string	Server::get_pass()
+const string	Server::get_pass()
 {
 	return(_password);
 }
@@ -24,7 +24,7 @@ std::map<const int, Client>&	Server::get_clients()
 }
 
 
-std::map<std::string, Channel>&	Server::get_channels()
+std::map<string, Channel>&	Server::get_channels()
 {
 	return(_channels);
 }
@@ -37,7 +37,7 @@ Client&		Server::get_client(int client_fd)
 }
 
 
-Client&		Server::get_client(std::string client_name)
+Client&		Server::get_client(string client_name)
 {
 	std::map<const int, Client>::iterator it = _clients.begin();
 
@@ -49,9 +49,9 @@ Client&		Server::get_client(std::string client_name)
 	return (it->second);
 }
 
-Channel&	Server::get_channel(std::string name)
+Channel&	Server::get_channel(string name)
 {
-	std::map<std::string, Channel>::iterator it = _channels.begin();
+	std::map<string, Channel>::iterator it = _channels.begin();
 
 	for (; it != _channels.end(); it++)
 	{
@@ -169,8 +169,8 @@ void	Server::new_client_connection()
 	else
 	{
 		fcntl(client_sock, F_SETFL, O_NONBLOCK);
-		std::string client_ip = read_client_ipv4_addr(client_addr);
-		std::string server_ip = read_server_ipv4_addr(client_sock);
+		string client_ip = read_client_ipv4_addr(client_addr);
+		string server_ip = read_server_ipv4_addr(client_sock);
 		add_client(client_sock, client_ip, server_ip);
 		pfd.fd = client_sock;
 		pfd.events = POLLIN | POLLOUT;
@@ -213,7 +213,7 @@ int	Server::read_from_existing_client(int client_fd)
 
 	if (nbytes <= 0)
 		return remove_client(client_fd, nbytes);
-	while (client.get_read_buffer().find("\r\n") != std::string::npos)
+	while (client.get_read_buffer().find("\r\n") != string::npos)
 	{
 		std::cout << "Found CRLF in message, continuing" << std::endl;
 		int pos = client.get_read_buffer().find("\r\n");
@@ -228,7 +228,7 @@ int	Server::read_from_existing_client(int client_fd)
 	return(nbytes);
 }
 
-void	Server::add_client	(int client_fd, std::string client_ip_v4_addr, std::string server_ipv4_addr)
+void	Server::add_client	(int client_fd, string client_ip_v4_addr, string server_ipv4_addr)
 {
 	Client		new_client(client_fd, client_ip_v4_addr, server_ipv4_addr);
 	_clients.insert(std::pair<int, Client>(client_fd, new_client));
@@ -254,7 +254,7 @@ int		Server::remove_client(int client_fd, int bytes_read)
 }
 
 
-void Server::add_channel(std::string name, std::string pass)
+void Server::add_channel(string name, string pass)
 {
 	if (_channels.find(name) == _channels.end())
 		_channels[name] = Channel(name, pass);
@@ -263,9 +263,9 @@ void Server::add_channel(std::string name, std::string pass)
 }
 
 
-int	Server::channel_exists(std::string channel_name)
+int	Server::channel_exists(string channel_name)
 {
-	std::map<std::string, Channel>::iterator it = _channels.begin();
+	std::map<string, Channel>::iterator it = _channels.begin();
 
 	for (; it != _channels.end(); it++) {
 		Channel &cl = it->second;
@@ -277,7 +277,7 @@ int	Server::channel_exists(std::string channel_name)
 }
 
 
-bool	Server::nickname_exists(std::string nickname)
+bool	Server::nickname_exists(string nickname)
 {
 	std::map<const int, Client>::iterator it = _clients.begin();
 	

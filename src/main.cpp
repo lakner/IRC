@@ -3,8 +3,9 @@
 #include <string>
 #include <exception>
 
+using std::string;
 
-int	output_err(std::string errormessage)
+int	output_err(string errormessage)
 {
 	std::cerr << "Error: " << errormessage << std::endl;
 	return 1;

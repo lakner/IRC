@@ -21,7 +21,7 @@ Commands::~Commands()
 int	Commands::execute(Server *server, Message *msg)
 {
 	std::cout << "execute: COMMAND:" << msg->get_command() << std::endl;
-	std::string command = msg->get_command();
+	string command = msg->get_command();
 	if (command == "CAP")							// change to switch case
 		return (exec_cap(msg));
 	else if (command == "PING")
@@ -53,7 +53,7 @@ int	Commands::execute(Server *server, Message *msg)
 
 int Commands::exec_mode(Server *server, Message *msg)
 {
-	std::string			channel_name, modes, modes_set;
+	string			channel_name, modes, modes_set;
 	std::stringstream	ss(msg->get_payload());
 	bool				mode_state = 1; // 1(+/set) 0(-/unset)
 	Client				*sender = msg->get_sender();
@@ -61,18 +61,18 @@ int Commands::exec_mode(Server *server, Message *msg)
 	ss >> channel_name >> modes;
 	if (channel_name[0] != '#')
 	{
-		msg->send_from_server(sender, std::string(ERR_NOSUCHNICK) + " " + sender->get_nickname() + " " + channel_name + " :No such nick");
+		msg->send_from_server(sender, string(ERR_NOSUCHNICK) + " " + sender->get_nickname() + " " + channel_name + " :No such nick");
 		return (-1);
 	}
 	if (modes.empty())
 	{
-		msg->send_from_server(sender, std::string(RPL_CHANNELMODEIS) + " " + sender->get_nickname() \
+		msg->send_from_server(sender, string(RPL_CHANNELMODEIS) + " " + sender->get_nickname() \
 								+ " " + channel_name + " :" + server->get_channel(channel_name).get_modes());
 		return (0);
 	}
 	else if (!server->get_channel(channel_name).is_operator(sender->get_nickname()))
 		msg->send_from_server(sender, sender->get_server_string() + " " + string(ERR_CHANOPRIVSNEEDED) + " " + channel_name + " :You must be a channel half-operator");
-	for (std::string::size_type i = 0; i < modes.length(); i++)
+	for (string::size_type i = 0; i < modes.length(); i++)
 	{
 		if (modes[i] == '+')
 		{
@@ -121,9 +121,9 @@ int Commands::exec_who(Server *server, Message *msg)
 
 	Channel& ch = server->get_channel(channel_name);
 
-	response += std::string(RPL_WHOREPLY) + " " + channel_name;
-	std::map<std::string, Client*> users = ch.get_users();
-	std::map<std::string, Client*>::iterator it = users.begin();
+	response += string(RPL_WHOREPLY) + " " + channel_name;
+	std::map<string, Client*> users = ch.get_users();
+	std::map<string, Client*>::iterator it = users.begin();
 	for (; it != users.end(); it++)
 	{
 		response += " ";
@@ -150,7 +150,7 @@ int	Commands::exec_topic(Server *server, Message *msg)
 
 	ss >> channel_name;
 	
-	if (payload.find(":") != std::string::npos)
+	if (payload.find(":") != string::npos)
 		new_channel_topic = payload.substr(payload.find(":") + 1); 
 
 	// we don't need a topic, but the channel name needs to be defined
@@ -257,17 +257,17 @@ int	Commands::exec_kick(Server *server, Message *msg)
 int	Commands::exec_invite(Server *server, Message *msg)
 {
 	std::stringstream	ss (msg->get_payload());
-	std::string 		channel_name, nickname;
+	string 		channel_name, nickname;
 	Client				*sender = msg->get_sender();
 	string				response = sender->get_server_string() + " ";
-	std::string			sender_nick = sender->get_nickname();
+	string			sender_nick = sender->get_nickname();
 	Client& 			client = *(msg->get_sender());
 	int					channel_exist = 1; //the channel existed before the invitation
 
 	ss >> nickname >> channel_name;
 	if (nickname.empty() || channel_name.empty())
 	{
-		response += std::string(ERR_NEEDMOREPARAMS) + " " + sender_nick + " ";
+		response += string(ERR_NEEDMOREPARAMS) + " " + sender_nick + " ";
 		response += channel_name + " :No channel or user specified: ";
 		return (msg->send_to(&client, response));
 	}
@@ -281,27 +281,27 @@ int	Commands::exec_invite(Server *server, Message *msg)
 	std::cout << "INVITE: nick_to_invite: " << nickname << std::endl;
 	if (!server->nickname_exists(nickname))
 	{
-		response += std::string(ERR_NOSUCHNICK) + " " + sender_nick + " ";
+		response += string(ERR_NOSUCHNICK) + " " + sender_nick + " ";
 		response += nickname + " " + channel_name + " :No such nick";
 	}
 	else if (ch.client_in_channel((server->get_client(nickname))))
 	{
-		response += std::string(ERR_USERONCHANNEL) + " " + sender_nick + " " + nickname;
+		response += string(ERR_USERONCHANNEL) + " " + sender_nick + " " + nickname;
 		response += " " + channel_name + " :is already in channel";
 	}
 	else if (!ch.client_in_channel(*sender) && channel_exist)
 	{
-		response += std::string(ERR_NOTONCHANNEL) + " " + sender_nick + " " + nickname;
+		response += string(ERR_NOTONCHANNEL) + " " + sender_nick + " " + nickname;
 		response += " " + channel_name + " :You're not on that channel";
 	}
 	else if (ch.get_invite_only() && !ch.is_operator(sender_nick))
 	{
-		response += std::string(ERR_CHANOPRIVSNEEDED) + " " + sender_nick;
+		response += string(ERR_CHANOPRIVSNEEDED) + " " + sender_nick;
 		response += " " + channel_name + " :You must be a channel half-operator";
 	}
 	else
 	{
-		response += std::string(RPL_INVITING) + " " + sender_nick + " " + nickname + " :" + channel_name;
+		response += string(RPL_INVITING) + " " + sender_nick + " " + nickname + " :" + channel_name;
 		//ch.invite(&(server->get_client(nickname)));
 		msg->send_to(&(server->get_client(nickname)), ":" + client.get_full_client_identifier() \
 														+ " INVITE " + nickname + " :" + channel_name);
@@ -338,25 +338,25 @@ int Commands::exec_pass(Server *server, Message *msg)
 	}
 	else if (payload.empty())
 	{
-		msg->send_to(sender, sender->get_server_string() + std::string(ERR_NEEDMOREPARAMS));
+		msg->send_to(sender, sender->get_server_string() + string(ERR_NEEDMOREPARAMS));
 		return 0;
 	}
 	else if (sender->is_authd() != 0)
 	{
-		msg->send_to(sender, sender->get_server_string() + std::string(ERR_ALREADYREGISTRED) + " " + msg->get_sender()->get_nickname() + " :You may not reregister");
+		msg->send_to(sender, sender->get_server_string() + string(ERR_ALREADYREGISTRED) + " " + msg->get_sender()->get_nickname() + " :You may not reregister");
 		return 0;
 	}
 	return 1;
 }
 
 
-bool Commands::is_valid_channel_name(std::string name)
+bool Commands::is_valid_channel_name(string name)
 {
 	if (name.length() > 50 || !name.length())
 		return false;
-	if (std::string("&#+!").find(name[0]) == std::string::npos)
+	if (string("&#+!").find(name[0]) == string::npos)
 		return false;
-	if (name.find_first_of(" \a,\r\n") != std::string::npos)
+	if (name.find_first_of(" \a,\r\n") != string::npos)
 		return false;
 	return true;
 }
@@ -460,7 +460,7 @@ int Commands::exec_join(Server *server, Message *msg)
 	ss >> s_channels >> s_passwords;
 	std::cout << "JOIN: channels: " << s_channels << "\n\tPasswords are: " << s_passwords << std::endl;
 
-	std::vector<std::string> vchannels, vpasswords;
+	std::vector<string> vchannels, vpasswords;
 	
 	std::stringstream channelstr(s_channels);
 	while (channelstr.good())
@@ -469,7 +469,7 @@ int Commands::exec_join(Server *server, Message *msg)
 		std::getline(channelstr, ch, ',');
 		if (!is_valid_channel_name(ch))
 		{
-			msg->send_from_server(sender, " " + std::string(ERR_NOSUCHCHANNEL) + " " + ch + " :No such channel");
+			msg->send_from_server(sender, " " + string(ERR_NOSUCHCHANNEL) + " " + ch + " :No such channel");
 			return 0;
 		}
 		vchannels.push_back(ch);
@@ -532,13 +532,13 @@ int Commands::exec_join(Server *server, Message *msg)
 
 int	Commands::exec_privmsg(Server *server, Message *msg)
 {
-	std::string			s_recipient;
+	string			s_recipient;
 	std::stringstream 	ss(msg->get_raw_content());
-	std::string 		payload;
+	string 		payload;
 	Client				*sender = msg->get_sender();
 	ss >> s_recipient >> s_recipient; // Read the second word (skipping leading whitespace)
 
-	if (msg->get_raw_content().find(":") == std::string::npos)
+	if (msg->get_raw_content().find(":") == string::npos)
 	{
 		msg->send_from_server(sender, "PRIVMSG: message not found.\n");
 		return -1;
@@ -550,7 +550,7 @@ int	Commands::exec_privmsg(Server *server, Message *msg)
 	{
 		Client& recpnt = server->get_client(s_recipient);
 		std::cout << "PRIVMSG: Recipient is: "<< s_recipient << std::endl;
-		std::string message = ":" + msg->get_sender()->get_full_client_identifier() + " ";
+		string message = ":" + msg->get_sender()->get_full_client_identifier() + " ";
 		message += msg->get_raw_content();
 		msg->send_to(&recpnt, message);
 	}
@@ -558,7 +558,7 @@ int	Commands::exec_privmsg(Server *server, Message *msg)
 	{
 		std::cout << "PRIVMSG: sending to channel '" << s_recipient << "'." << std::endl;
 		Channel &channel = server->get_channel(s_recipient);
-		std::string msg_content = ":" + msg->get_sender()->get_full_client_identifier();
+		string msg_content = ":" + msg->get_sender()->get_full_client_identifier();
 		msg_content += " PRIVMSG " + s_recipient + " " + payload;
 		channel.send_to_all_except(msg_content, *(msg->get_sender()));
 	}
@@ -567,7 +567,7 @@ int	Commands::exec_privmsg(Server *server, Message *msg)
 
 
 // //invite a user to a channel
-// void	Commands::invite(Server *server, std::string channel_name, std::string nickname)
+// void	Commands::invite(Server *server, string channel_name, string nickname)
 // {
 // 	if (server->channel_exists(channel_name))
 // 	{
