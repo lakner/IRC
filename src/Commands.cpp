@@ -183,7 +183,7 @@ int	Commands::exec_topic(Server *server, Message *msg)
 	if (!ch.client_in_channel(*sender))		// client needs to be in channel
 		response += sender->get_server_string() + " " + string(ERR_NOTONCHANNEL) + " " + ch.get_channel_name() + " :You're not on that channel";
 	else if (!ch.allowed_to_set_topic(sender->get_nickname()))
-		response += sender->get_server_string() + " " + string(ERR_CHANOPRIVSNEEDED) + " " + ch.get_channel_name() + " :You must be a channel half-operator";
+		response += sender->get_server_string() + " " + string(ERR_CHANOPRIVSNEEDED) + " " + sender->get_nickname() + " " + ch.get_channel_name() + " :You must be a channel half-operator";
 	else if (new_channel_topic.empty())		// no second parameter or it does not start with ':' - return the topic
 	{	
 		response += sender->get_server_string() + " " + string(RPL_TOPIC) + " " + sender->get_nickname() + " " ;
@@ -262,17 +262,12 @@ int	Commands::exec_kick(Server *server, Message *msg)
 		else
 			response += " " + nick_to_kick + " " + reason;
 		ch.send_to_all_in_channel(response);
-		//msg->send_to(&(server->get_client(nick_to_kick)), response);
 		ch.kick(nick_to_kick);
 		return (0);
 	}
 	return (msg->send_to(sender, response));
 }
 
-//void create_channel(std::string channel_name, Server *)
-//{
-
-//}
 
 int	Commands::exec_invite(Server *server, Message *msg)
 {
