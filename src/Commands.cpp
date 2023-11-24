@@ -53,24 +53,25 @@ int	Commands::execute(Server *server, Message *msg)
 
 int Commands::exec_mode(Server *server, Message *msg)
 {
-	string			channel_name, modes, modes_set;
+	string				channel_name, modes, modes_set;
 	std::stringstream	ss(msg->get_payload());
 	bool				mode_state = 1; // 1(+/set) 0(-/unset)
 	Client				*sender = msg->get_sender();
+	string				sender_nick = sender->get_nickname();
 
 	ss >> channel_name >> modes;
 
 	if(!server->channel_exists(channel_name))
-		return (msg->send_from_server(sender, std::string(ERR_NOSUCHCHANNEL) + " " + sender->get_nickname() + " " + channel_name + " :No such channel"));
+		return (msg->send_from_server(sender, string(ERR_NOSUCHCHANNEL) + " " + sender_nick + " " + channel_name + " :No such channel"));
 	if (channel_name[0] != '#')
 	{
-		msg->send_from_server(sender, string(ERR_NOSUCHNICK) + " " + sender->get_nickname() + " " + channel_name + " :No such nick");
+		msg->send_from_server(sender, string(ERR_NOSUCHNICK) + " " + sender_nick + " " + channel_name + " :No such nick");
 		return (-1);
 	}
 	if (modes.empty())
 	{
 		std::cout << "response" << std::endl;
-		std::string response = string(RPL_CHANNELMODEIS) + " " + sender->get_nickname() \
+		string response = string(RPL_CHANNELMODEIS) + " " + sender_nick \
 								+ " " + channel_name + " :" + server->get_channel(channel_name).get_modes();
 		if (!server->get_channel(channel_name).get_password().empty())
 			response += " " + server->get_channel(channel_name).get_password();
@@ -80,10 +81,10 @@ int Commands::exec_mode(Server *server, Message *msg)
 		return (0);
 	}
 	else if (modes == "b")
-		return(msg->send_from_server(sender, string(RPL_ENDOFBANLIST) + " " + sender->get_nickname() + " "
+		return(msg->send_from_server(sender, string(RPL_ENDOFBANLIST) + " " + sender_nick + " "
 				+ channel_name + " :End of channel ban list"));
-	else if (!server->get_channel(channel_name).is_operator(sender->get_nickname()))
-		msg->send_from_server(sender, sender->get_server_string() + " " + string(ERR_CHANOPRIVSNEEDED) + " " + channel_name + " :You must be a channel half-operator");
+	else if (!server->get_channel(channel_name).is_operator(sender_nick))
+		return(msg->send_from_server(sender, string(ERR_CHANOPRIVSNEEDED) + " " + sender_nick + " " + channel_name + " :You must be a channel half-operator"));
 	for (string::size_type i = 0; i < modes.length(); i++)
 	{
 		if (modes[i] == '+')
@@ -276,10 +277,10 @@ int	Commands::exec_kick(Server *server, Message *msg)
 int	Commands::exec_invite(Server *server, Message *msg)
 {
 	std::stringstream	ss (msg->get_payload());
-	string 		channel_name, nickname;
+	string 				channel_name, nickname;
 	Client				*sender = msg->get_sender();
 	string				response = sender->get_server_string() + " ";
-	string			sender_nick = sender->get_nickname();
+	string				sender_nick = sender->get_nickname();
 	Client& 			client = *(msg->get_sender());
 	int					channel_exist = 1; //the channel existed before the invitation
 
