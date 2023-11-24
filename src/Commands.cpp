@@ -276,8 +276,11 @@ int	Commands::exec_invite(Server *server, Message *msg)
 	}
 	else if(!server->channel_exists(channel_name))
 	{
-		server->add_channel(channel_name, "");
-		channel_exist = 0;
+		if (is_valid_channel_name(channel_name))
+		{
+			server->add_channel(channel_name, "");
+			channel_exist = 0;
+		}
 	}
 
 	Channel &ch = server->get_channel(channel_name);
