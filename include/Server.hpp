@@ -56,10 +56,11 @@ class Server
 		void							new_client_connection();
 		int								read_from_existing_client(int client_fd);
 		void							add_client(int client_fd, std::string client_ipv4, std::string server_ipv4);
+		int 							process_read_buffer(int client_fd);
 		std::string						read_client_ipv4_addr(struct sockaddr& client_addr);
 		std::string						read_client_ipv4_addr(int socket_fd);
 		std::string						read_server_ipv4_addr(int socket_fd);
-		int								remove_client(int client_fd, int bytes_read);
+		int								remove_client(int client_fd);
 		int								remove_from_all_channels(Client *client);
 };
 

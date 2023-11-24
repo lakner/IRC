@@ -134,14 +134,50 @@ int	Server::run()
 			{
 				if (it->fd == this->_server_sock_fd)
 					new_client_connection();
-				else if (read_from_existing_client(it->fd) <= 0)
-					continue ;
+				else
+				{
+					if (read_from_existing_client(it->fd) <= 0)
+					{
+						remove_client(it->fd);
+						it = _pollfds.erase(it);
+						continue ;
+					}
+					else
+						process_read_buffer(it->fd);
+				}
 			}
 			else if(it->revents & POLLOUT)	
 				get_client(it->fd).send_all_in_write_buffer();
 			it++;
 		}
 	}
+}
+
+int Server::process_read_buffer(int client_fd)
+{
+	Client &client = _clients[client_fd];
+	while (client.get_read_buffer().find("\r\n") != string::npos)
+	{
+		std::cout << "Found CRLF in message, continuing" << std::endl;
+		std::string read_buffer = client.get_read_buffer();
+		int pos = read_buffer.find("\r\n");
+		Message msg(&client, read_buffer.substr(0, pos + 2));
+		std::cout << "Read buffer contains: " << client.get_read_buffer() << std::endl
+				<< "-----END OF READ BUFFER-----" << std::endl;
+		client.clear_read_buffer();
+		if (msg.parse() == 0)
+			Commands::execute(this, &msg);
+		std::cout << "Done processing read buffer: " << read_buffer << std::endl;
+	}
+	return 0;
+}
+
+int		Server::remove_client(int client_fd)
+{
+	remove_from_all_channels(&get_client(client_fd));
+	close(client_fd); // Bye!
+	_clients.erase(client_fd);
+	return 0;
 }
 
 void	Server::new_client_connection()
@@ -200,52 +236,23 @@ int	Server::read_from_existing_client(int client_fd)
 	Client &client = get_client(client_fd);
 	memset(&buf, 0, sizeof(buf));
 	nbytes = recv(client_fd, buf, sizeof (buf), 0);
-	client.set_read_buffer(buf);
-	std::cout << "read " << nbytes << " bytes in buf: " << buf;
-	std::cout << "get_read_buffer: " << client.get_read_buffer() << std::endl;
-
-	if (nbytes <= 0)
-		return remove_client(client_fd, nbytes);
-	while (client.get_read_buffer().find("\r\n") != string::npos)
+	if (nbytes == 0) // Connection closed
+		std::cout << "pollserver: socket " << client_fd << " hung up." << std::endl;
+	else if (nbytes <= 0)// some other error
+		std::cout << "Error on receive" << std::endl;
+	else
 	{
-		std::cout << "Found CRLF in message, continuing" << std::endl;
-		int pos = client.get_read_buffer().find("\r\n");
-		Message msg(&client, client.get_read_buffer().substr(0, pos + 2));
-		std::cout << "Read buffer contains: " << client.get_read_buffer() << std::endl
-				  << "-----END OF READ BUFFER-----" << std::endl;
-		client.clear_read_buffer();
-		if (msg.parse() == 0)
-			Commands::execute(this, &msg);
+		client.set_read_buffer(buf);
+		std::cout << "read " << nbytes << " bytes in buf: " << buf;
+		std::cout << "get_read_buffer: " << client.get_read_buffer() << std::endl;
 	}
-	std::cout << "Done processing read buffer: " << client.get_read_buffer() << std::endl;
-	return(nbytes);
+	return nbytes;
 }
 
 void	Server::add_client	(int client_fd, string client_ip_v4_addr, string server_ipv4_addr)
 {
 	Client		new_client(client_fd, client_ip_v4_addr, server_ipv4_addr);
 	_clients.insert(std::pair<int, Client>(client_fd, new_client));
-}
-
-int		Server::remove_client(int client_fd, int bytes_read)
-{
-	if (bytes_read == 0) // Connection closed
-		std::cout << "pollserver: socket " << client_fd << " hung up." << std::endl;
-	else // some other error
-		std::cout << "Error on receive" << std::endl;
-	remove_from_all_channels(&get_client(client_fd));
-	close(client_fd); // Bye!
-	_clients.erase(client_fd);
-
-	for (std::vector<pollfd>::iterator it = _pollfds.begin(); it != _pollfds.end(); it++)
-	{
-		if (it->fd == client_fd)
-		{
-			_pollfds.erase(it);
-			break;
-		}
-	}
-	return (bytes_read);
 }
 
 void Server::add_channel(string name, string pass)
