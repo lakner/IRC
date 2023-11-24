@@ -69,8 +69,14 @@ int Commands::exec_mode(Server *server, Message *msg)
 	}
 	if (modes.empty())
 	{
-		msg->send_from_server(sender, string(RPL_CHANNELMODEIS) + " " + sender->get_nickname() \
-								+ " " + channel_name + " :" + server->get_channel(channel_name).get_modes());
+		std::cout << "response" << std::endl;
+		std::string response = string(RPL_CHANNELMODEIS) + " " + sender->get_nickname() \
+								+ " " + channel_name + " :" + server->get_channel(channel_name).get_modes();
+		if (!server->get_channel(channel_name).get_password().empty())
+			response += " " + server->get_channel(channel_name).get_password();
+		if (server->get_channel(channel_name).get_userlimit() != 9999)
+			response += " " + std::to_string(server->get_channel(channel_name).get_userlimit());
+		msg->send_from_server(sender, response);
 		return (0);
 	}
 	else if (modes == "b")
@@ -316,6 +322,7 @@ int	Commands::exec_invite(Server *server, Message *msg)
 		//ch.invite(&(server->get_client(nickname)));
 		msg->send_to(&(server->get_client(nickname)), ":" + client.get_full_client_identifier() \
 														+ " INVITE " + nickname + " :" + channel_name);
+		ch.add_invited(&server->get_client(nickname));
 	}
 	return (msg->send_to(sender, response));
 }
@@ -516,8 +523,12 @@ int Commands::exec_join(Server *server, Message *msg)
 		}
 		if (i < vpasswords.size() && !channels[vchannels[i]].get_invite_only())
 			ret = channels[vchannels[i]].add_user(sender, vpasswords[i]);
-		else if (!channels[vchannels[i]].get_invite_only())
+		else if (!channels[vchannels[i]].get_invite_only() || channels[vchannels[i]].is_invited(sender->get_nickname()))
+		{
+			if (channels[vchannels[i]].is_invited(sender->get_nickname()))
+				channels[vchannels[i]].remove_invited(sender);
 			ret = channels[vchannels[i]].add_user(sender, "");
+		}
 		else
 			ret = ERR_INVITEONLYCHAN;
 

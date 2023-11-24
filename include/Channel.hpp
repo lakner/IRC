@@ -19,7 +19,9 @@ class	Channel
 		int								send_to_all_except(std::string content, Client& client);
 		int								remove_user(Client *client);
 		int								add_operator(Client *client);
+		int								add_invited(Client *client);
 		int								remove_operator(Client *client);
+		int								remove_invited(Client *client);
 		bool							client_in_channel(Client &client);
 		std::string						get_channel_name( void );
 		std::map<std::string, Client*>&	get_users();
@@ -28,9 +30,11 @@ class	Channel
 		std::string						set_mode(char mode, bool mode_stat, std::stringstream *param, Server *server, Message *msg);
 		std::string						get_password();
 		std::string						get_topic();
+		int								get_userlimit();
 		bool							get_invite_only();
 		void							set_topic( std::string new_topic );
 		bool							is_operator(std::string nickname);
+		bool							is_invited(std::string nickname);
 		bool							allowed_to_set_topic(std::string nickname);
 		//bool							allowed_to_kick(std::string nickname); //change
 		//bool							allowed_to_invite(std::string nickname); //change
@@ -48,6 +52,7 @@ class	Channel
 		bool							_topic_change;
 		std::map<std::string, Client*>	_client_list;
 		std::map<std::string, Client*>	_operator_list;
+		std::map<std::string, Client*> 	_invited_users;
 		void							notify_user_joined(Client *client);
 		void							notify_user_exit(Client *client);
 		//void							notify_user_is_operator(Client *client);

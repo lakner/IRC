@@ -24,7 +24,7 @@ Channel::~Channel()
 //if client already exist in a channel just notify
 string	Channel::add_user(Client *client, string password)
 {
-	if (password == this->_password)
+	if (password == this->_password || is_invited(client->get_nickname()))
 	{
 		// first user automatically is an operator
 		if (_client_list.empty())
@@ -204,6 +204,40 @@ bool	Channel::is_operator(string nickname)
 	return (false);
 }
 
+bool	Channel::is_invited(string nickname)
+{
+	std::map<string, Client*>::iterator it = _invited_users.begin();
+
+	for (; it != _invited_users.end(); it++) {
+		Client *client = it->second;
+
+		if (client->get_nickname() == nickname)
+			return (true);
+	}
+	return (false);
+}
+
+int		Channel::add_invited(Client *client)
+{
+	_invited_users[client->get_nickname()] = client;
+	return 0;
+}
+
+int		Channel::remove_invited(Client *client)
+{
+	string keyToRemove = client->get_nickname();
+	std::map<string, Client*>::iterator it = _invited_users.find(keyToRemove);
+
+	if (it != _invited_users.end())
+	{
+		_invited_users.erase(it);
+		return 0;
+	} else {
+		return (-1);
+	}
+	return -1;
+}
+
 // bool	Channel::allowed_to_invite(string nickname) //change
 // {
 // 	if (_invite_only)
@@ -275,24 +309,6 @@ void	Channel::invite(Client *client)
 {
 	add_user(client, _password);
 }
-
-// string Channel::add_mode_change(char mode, bool *sign, bool mode_stat)
-// {
-	
-// 	string ret;
-
-// 	if (mode_stat != *sign)
-// 	{
-// 		if (mode_stat == 0)
-// 			ret = "-";
-// 		else
-// 			ret = "+";
-// 		*sign = mode_stat;
-// 	}
-// 	ret += mode;
-// 	return (ret);
-// }
-
 
 string	Channel::set_mode(char mode, bool mode_stat, std::stringstream *param, Server *server, Message *msg)
 {
@@ -393,4 +409,9 @@ string Channel::get_modes()
 		modes += "t";
 	std::cout << modes << std::endl;
 	return (modes);
+}
+
+int Channel::get_userlimit()
+{
+	return (_userlimit);
 }
