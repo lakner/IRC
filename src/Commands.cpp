@@ -243,6 +243,11 @@ int	Commands::exec_kick(Server *server, Message *msg)
 		response += string(ERR_USERNOTINCHANNEL) + " " + sender_nick + " ";
 		response += nick_to_kick + " " + channel_name + " :They are not on that channel";
 	}
+	else if (!ch.client_in_channel(*sender))
+	{
+		response += string(ERR_NOTONCHANNEL) + " " + sender_nick + " ";
+		response += nick_to_kick + " " + channel_name + " :You're not on that channel";
+	}
 	else if (!ch.is_operator(sender_nick))
 	{
 		response += string(ERR_CHANOPRIVSNEEDED) + " " + sender_nick;
