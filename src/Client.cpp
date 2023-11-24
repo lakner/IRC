@@ -30,7 +30,7 @@ Client::~Client()
 
 }
 
-void	Client::set_read_buffer(char *buffer)
+void	Client::set_read_buffer(string buffer)
 {
 	_read_buffer += string(buffer);
 }
