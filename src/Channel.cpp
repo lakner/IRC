@@ -418,3 +418,8 @@ int Channel::get_userlimit()
 {
 	return (_userlimit);
 }
+
+int	Channel::get_num_users()
+{
+	return (_channelusers);
+}
