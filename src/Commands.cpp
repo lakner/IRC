@@ -174,10 +174,10 @@ int	Commands::exec_topic(Server *server, Message *msg)
 	// channel needs to exist
 	else if(!server->channel_exists(channel_name))
 	{
-		response += sender->get_server_string() + " " + ERR_NOSUCHCHANNEL;
+		response += sender->get_server_string() + " " + ERR_NOSUCHCHANNEL + " " + sender->get_nickname() + " " + channel_name + " :No such channel";
 		return (msg->send_to(sender, response));
 	}
-
+	
 	Channel& ch = server->get_channel(channel_name);
 	if (!ch.client_in_channel(*sender))		// client needs to be in channel
 		response += sender->get_server_string() + " " + string(ERR_NOTONCHANNEL) + " " + ch.get_channel_name() + " :You're not on that channel";
@@ -586,22 +586,3 @@ int	Commands::exec_privmsg(Server *server, Message *msg)
 	}
 	return 0;
 }
-
-
-// //invite a user to a channel
-// void	Commands::invite(Server *server, string channel_name, string nickname)
-// {
-// 	if (server->channel_exists(channel_name))
-// 	{
-// 		Channel &ch = server->get_channel(channel_name);
-// 		static std::map<const int, Client>& clientMap = server->get_clients();
-// 		std::map<const int, Client>::iterator it = clientMap.begin();
-
-// 		for (; it != clientMap.end(); it++) {
-// 			Client *cl = &it->second;
-
-// 			if (cl->get_nickname() == nickname)
-// 				ch.add_user(cl, ch.get_password());
-// 		}
-// 	}
-// }
