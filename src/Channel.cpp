@@ -53,6 +53,7 @@ int		Channel::remove_user(Client *client)
 	} else {
 		return (-1);
 	}
+	_channelusers--;
 	notify_user_exit(client);
 	send_user_list(client);
 	return 0;
