@@ -54,7 +54,6 @@ int		Channel::remove_user(Client *client)
 		return (-1);
 	}
 	notify_user_exit(client);
-	// send_topic(client);
 	send_user_list(client);
 	return 0;
 }

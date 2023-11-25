@@ -36,8 +36,6 @@ class	Channel
 		bool							is_operator(std::string nickname);
 		bool							is_invited(std::string nickname);
 		bool							allowed_to_set_topic(std::string nickname);
-		//bool							allowed_to_kick(std::string nickname); //change
-		//bool							allowed_to_invite(std::string nickname); //change
 		void							kick(std::string nickname);
 		void							invite(Client *client);
 
