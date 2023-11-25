@@ -63,27 +63,26 @@ int Commands::exec_mode(Server *server, Message *msg)
 
 	if(!server->channel_exists(channel_name))
 		return (msg->send_from_server(sender, string(ERR_NOSUCHCHANNEL) + " " + sender_nick + " " + channel_name + " :No such channel"));
-	if (channel_name[0] != '#')
-	{
-		msg->send_from_server(sender, string(ERR_NOSUCHNICK) + " " + sender_nick + " " + channel_name + " :No such nick");
-		return (-1);
-	}
+
+	Channel &ch = server->get_channel(channel_name);
 	if (modes.empty())
 	{
 		std::cout << "response" << std::endl;
-		string response = string(RPL_CHANNELMODEIS) + " " + sender_nick \
-								+ " " + channel_name + " :" + server->get_channel(channel_name).get_modes();
-		if (!server->get_channel(channel_name).get_password().empty())
-			response += " " + server->get_channel(channel_name).get_password();
-		if (server->get_channel(channel_name).get_userlimit() != 9999)
-			response += " " + std::to_string(server->get_channel(channel_name).get_userlimit());
-		msg->send_from_server(sender, response);
-		return (0);
+		string response = string(RPL_CHANNELMODEIS) + " " + sender_nick + " " + channel_name + " :" + ch.get_modes();
+		if (!ch.get_password().empty())
+			response += " " + ch.get_password();
+		if (ch.get_userlimit() != 9999)
+		{
+			std::ostringstream ss_userlimit;
+			ss_userlimit << ch.get_userlimit();
+			response += " " + ss_userlimit.str();
+		}
+		return(msg->send_from_server(sender, response));
 	}
 	else if (modes == "b")
 		return(msg->send_from_server(sender, string(RPL_ENDOFBANLIST) + " " + sender_nick + " "
 				+ channel_name + " :End of channel ban list"));
-	else if (!server->get_channel(channel_name).is_operator(sender_nick))
+	else if (!ch.is_operator(sender_nick))
 		return(msg->send_from_server(sender, string(ERR_CHANOPRIVSNEEDED) + " " + sender_nick + " " + channel_name + " :You must be a channel half-operator"));
 	for (string::size_type i = 0; i < modes.length(); i++)
 	{
@@ -105,10 +104,10 @@ int Commands::exec_mode(Server *server, Message *msg)
 			mode_state = 0;
 			continue ;
 		}
-		modes_set += server->get_channel(channel_name).set_mode(modes[i], mode_state, &ss, server, msg);
+		modes_set += ch.set_mode(modes[i], mode_state, &ss, server, msg);
 	}
 	if (modes_set.size() > 1)
-		server->get_channel(channel_name).send_to_all_in_channel(":" + sender->get_full_client_identifier() + " MODE " + channel_name + " :" + modes_set);
+		ch.send_to_all_in_channel(":" + sender->get_full_client_identifier() + " MODE " + channel_name + " :" + modes_set);
 	return (0);
 }
 

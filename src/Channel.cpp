@@ -376,19 +376,22 @@ string	Channel::set_mode(char mode, bool mode_stat, std::stringstream *param, Se
 			if (mode_stat)
 			{
 				try {
-    				int limit = std::stoi(temp);
-   					_userlimit = (limit > 9999) ? 9999 : limit;
+					int limit;
+					std::istringstream(temp) >> limit;
+					_userlimit = (limit > 9999) ? 9999 : limit;
 				} catch (const std::invalid_argument& e) {
-				    break;
+					break;
 				} catch (const std::out_of_range& e) {
-   					_userlimit = 9999;
+					_userlimit = 9999;
 				}
-				send_to_all_in_channel(mode_message + " +l :" + std::to_string(_userlimit));
+				std::ostringstream ss_userlimit;
+				ss_userlimit << _userlimit;
+				send_to_all_in_channel(mode_message + " +l :" + ss_userlimit.str());
 			}
 			else
 			{
 				_userlimit = 9999;
-        		send_to_all_in_channel(mode_message + " :-l");
+				send_to_all_in_channel(mode_message + " :-l");
 			}
 			break ;
 	}
