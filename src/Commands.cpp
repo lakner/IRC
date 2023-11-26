@@ -271,14 +271,19 @@ int	Commands::exec_kick(Server *server, Message *msg)
 int	Commands::exec_invite(Server *server, Message *msg)
 {
 	std::stringstream	ss (msg->get_payload());
-	string 				channel_name, nickname;
+	string 				channel_name, nickname, extra_arguments;
 	Client				*sender = msg->get_sender();
 	string				response = sender->get_server_string() + " ";
 	string				sender_nick = sender->get_nickname();
 	Client& 			client = *(msg->get_sender());
 	int					channel_exist = 1; //the channel existed before the invitation
 
-	ss >> nickname >> channel_name;
+	ss >> nickname >> channel_name >> extra_arguments;
+	if (!extra_arguments.empty())
+	{
+		response += "NOTICE " + sender_nick + " :*** Invalid duration for invite";
+		return (msg->send_to(&client, response));
+	}
 	if (nickname.empty() || channel_name.empty())
 	{
 		response += string(ERR_NEEDMOREPARAMS) + " " + sender_nick + " ";

@@ -292,23 +292,28 @@ bool	Server::nickname_exists(string nickname)
 }
 
 //remove the user from every channel
-int	Server::remove_from_all_channels(Client *client)
+int Server::remove_from_all_channels(Client *client)
 {
-	std::map<std::string, Channel>::iterator it = _channels.begin();
+    std::map<std::string, Channel>::iterator it = _channels.begin();
 
-	for (; it != _channels.end();)
-	{
-		Channel &ch = it->second;
-		ch.remove_user(client);
-		ch.remove_operator(client);
-		if (!ch.get_num_users())
-		{
-			it = _channels.erase(it);
-			continue;
-		}
-		else
-			ch.send_to_all_in_channel(":" + client->get_full_client_identifier() + " QUIT " + ":Quit: KVIrc 5.0.0 Aria http://www.kvirc.net/");
-		it++;
-	}
-	return 0;
+    while (it != _channels.end())
+    {
+        Channel &ch = it->second;
+        ch.remove_user(client);
+        ch.remove_operator(client);
+
+        if (!ch.get_num_users())
+        {
+            // Erase the channel and get the iterator to the next element
+            it = _channels.erase(it);
+        }
+        else
+        {
+            ch.send_to_all_in_channel(":" + client->get_full_client_identifier() + " QUIT " + ":Quit: KVIrc 5.0.0 Aria http://www.kvirc.net/");
+            ++it; // Move the iterator to the next element
+        }
+    }
+
+    return 0;
 }
+
